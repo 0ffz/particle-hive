@@ -10,6 +10,7 @@ simulation:
   size:
     width: 1000
     height: 1000
+    depth: 1000
 particles:
   argon:
     color: ffffff

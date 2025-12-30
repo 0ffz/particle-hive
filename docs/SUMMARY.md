@@ -9,7 +9,7 @@
   - Particles
   - Interactions
 - Interface
-  - Live parameters
+  - [Live parameters](/guide/interface/live-parameters)
   - Config file
   - Projects
   - Statistics

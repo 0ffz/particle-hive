@@ -1,9 +1,8 @@
 package me.dvyy.particles.config
 
 import com.charleskorn.kaml.YamlNode
-import de.fabmax.kool.util.RenderLoop
+import de.fabmax.kool.util.KoolDispatchers
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -12,7 +11,7 @@ import kotlinx.serialization.encodeToString
 class ParameterOverrides(
     val settings: AppSettings,
 ) {
-    private val scope = CoroutineScope(Dispatchers.RenderLoop)
+    private val scope = CoroutineScope(KoolDispatchers.Frontend)
     private val _overrides = mutableMapOf<String, YamlNode>()
     val overrides = MutableSharedFlow<Map<String, YamlNode>>(
         replay = 1,

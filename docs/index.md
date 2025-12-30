@@ -11,6 +11,10 @@ items:
     desc: Create custom simulations
     icon: code
     url: /api-usage
+  - title: Run in Browser
+    desc: Open a demo in your browser
+    icon: external-link
+    url: https://particles.dvyy.me
 #  - title: About
 #    icon: info-circle
 #    desc: Learn more about this project

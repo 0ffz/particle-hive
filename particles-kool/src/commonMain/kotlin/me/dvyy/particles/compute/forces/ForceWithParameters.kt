@@ -7,6 +7,7 @@ import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputeShader
 import de.fabmax.kool.util.MemoryLayout
 import de.fabmax.kool.util.Struct
+import de.fabmax.kool.util.set
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -19,6 +20,9 @@ class ForceWithParameters<T : Force>(
     val force: T,
     private val totalParticles: Int,
 ) {
+    val interactionsStruct = InteractionStruct()
+    val forceParametersStruct = ForceParametersStruct()
+
     val hashCount = when (force) {
         is PairwiseForce -> totalParticles * totalParticles
         is IndividualForce -> totalParticles
@@ -51,26 +55,31 @@ class ForceWithParameters<T : Force>(
 
     /** Creates a UBO representing the parameters */
     context(program: KslProgram)
-    val kslForcesStruct get() = program.uniformStruct(uniformName, provider = ::ForceParametersStruct)
+    val forceParameters get() = program.uniformStruct(uniformName, forceParametersStruct)
 
     context(scope: KslScopeBuilder, program: KslProgram)
     fun interactionFor(hash: KslInt) =
-        kslForcesStruct.struct.interactions.ksl[hash]
+        forceParameters[forceParametersStruct.interactions][hash]
+
+    fun KslVarStruct<InteractionStruct>.parametersAsArray() =
+        interactionsStruct.parameters.map { this[it] }.toTypedArray()
 
     /** Updates bound UBO with parameters on CPU. */
     context(shader: ComputeShader)
     fun uploadParameters() {
-        val ubo = shader.uniformStruct(uniformName, ::ForceParametersStruct)
+        val ubo = shader.uniformStruct(uniformName, forceParametersStruct)
         // Clear all data (zero matrix represents skipping parameters)
         ubo.set {
-            repeat(interactions.arraySize) { i ->
-                interactions[i].enabled.set(0f)
-                interactions[i].parameters.forEach { it.set(0f) }
+            repeat(it.interactions.arraySize) { i ->
+                set(it.interactions, i) { interaction ->
+                    interaction.enabled.set(0f)
+                    interaction.parameters.forEach { it.set(0f) }
+                }
             }
             parameterMatrices.forEach { (set, params) ->
-                interactions[set.hash].enabled.set(1f)
-                interactions[set.hash].parameters.forEachIndexed { i, param ->
-                    param.set(params[i])
+                set(it.interactions, set.hash) {
+                    it.enabled.set(1f)
+                    it.parameters.forEachIndexed { i, param -> param.set(params[i]) }
                 }
             }
         }
@@ -104,14 +113,18 @@ class ForceWithParameters<T : Force>(
             val lastIndex = uniformInt1("lastIndex")
             val distances = storage<KslFloat1>("distances")
             val output = storage<KslFloat1>("outputBuffer")
-            kslForcesStruct
+            forceParameters
 
             val function = (force as PairwiseForce).createFunction()
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 `if`(id le lastIndex) {
-                    val extractedParams = structVar(interactionFor(0.const)).struct
-                    output[id] = function.function.invoke(distances[id], localNeighbors, *extractedParams.parametersAsArray())
+                    val extractedParams = structVar(interactionFor(0.const))
+                    output[id] = function.function.invoke(
+                        distances[id],
+                        localNeighbors,
+                        *extractedParams.parametersAsArray(),
+                    )
                 }
             }
         }
@@ -137,12 +150,10 @@ class ForceWithParameters<T : Force>(
                 }
             }
         }
-
-        fun parametersAsArray() = parameters.map { it.ksl }.toTypedArray()
     }
 
-    inner class ForceParametersStruct() : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std140) {
-        val interactions = structArray(hashCount, "interactions", structProvider = ::InteractionStruct)
+    inner class ForceParametersStruct : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std140) {
+        val interactions = structArray(interactionsStruct, hashCount.coerceAtLeast(1), "interactions")
     }
 }
 

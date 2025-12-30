@@ -4,15 +4,14 @@ package me.dvyy.particles.config
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
-import de.fabmax.kool.util.RenderLoop
+import de.fabmax.kool.util.KoolDispatchers
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import me.dvyy.particles.render.Gradients
 import me.dvyy.particles.render.ParticleColor
 import me.dvyy.particles.render.UiScale
 
 class AppSettings() {
-    private val scope = CoroutineScope(Dispatchers.RenderLoop)
+    private val scope = CoroutineScope(KoolDispatchers.Frontend)
     val settings: ObservableSettings = createSettings()
     val ui = UiSettings(settings, scope)
     val recentProjectPaths = settings.getFlow("recentProjectPaths", listOf<String>(), scope)

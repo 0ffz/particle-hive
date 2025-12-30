@@ -2,12 +2,12 @@ package me.dvyy.particles
 
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.scene.Scene
-import de.fabmax.kool.util.RenderLoop
+import de.fabmax.kool.util.FrontendScope
+import de.fabmax.kool.util.KoolDispatchers
 import de.fabmax.kool.util.delayFrames
-import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.forces.Force
 import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.AppSettings
@@ -35,8 +35,8 @@ class SceneManager(
         load()
     }
 
-    fun load() = launchOnMainThread {
-        val sceneScope = CoroutineScope(Dispatchers.RenderLoop)
+    fun load() = FrontendScope.launch {
+        val sceneScope = CoroutineScope(KoolDispatchers.Frontend)
         // Create dependencies with koin
         val application = koinApplication {
             modules(

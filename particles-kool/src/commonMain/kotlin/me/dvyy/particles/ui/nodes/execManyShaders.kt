@@ -19,7 +19,7 @@ inline fun <T> execManyShaders(
 
     val deferred = CompletableDeferred<T>()
 
-    computePass.onAfterPass {
+    computePass.onAfterCollect {
         computePass.isEnabled = false
         launchOnMainThread {
             try {

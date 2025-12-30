@@ -1,10 +1,10 @@
 package me.dvyy.particles.ui
 
-import de.fabmax.kool.Assets
 import de.fabmax.kool.pipeline.ImageData2d
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
+import de.fabmax.kool.util.FrontendScope
 import kotlinx.coroutines.launch
 
 /**
@@ -26,7 +26,7 @@ object Icons {
             mipMapping = MipMapping.Off,
             samplerSettings = SamplerSettings().nearest()
         ).apply {
-            Assets.launch {
+            FrontendScope.launch {
                 loadSvg(svg.replace("stroke=\"currentColor\"", "stroke=\"#ffffff\"")).onSuccess { upload(it) }
             }
         }

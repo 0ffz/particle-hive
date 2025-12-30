@@ -1,6 +1,7 @@
 package me.dvyy.particles.compute.simulation
 
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.util.set
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.data.MeanSquareVelocities
 import me.dvyy.particles.compute.forces.ForcesDefinition
@@ -56,10 +57,10 @@ class FieldsMultiPasses(
                         configRepo.whenDirty {
                             fields.dT = simulation.dT.toFloat()
                             fields.params.set {
-                                maxVelocity.set(simulation.maxVelocity.toFloat())
-                                maxForce.set(simulation.maxForce.toFloat())
-                                targetVelocity.set(simulation.targetVelocity.toFloat())
-                                targetVelocityFixStrength.set(simulation.targetVelocityStrength.toFloat())
+                                it.maxVelocity.set(simulation.maxVelocity.toFloat())
+                                it.maxForce.set(simulation.maxForce.toFloat())
+                                it.targetVelocity.set(simulation.targetVelocity.toFloat())
+                                it.targetVelocityFixStrength.set(simulation.targetVelocityStrength.toFloat())
                             }
                             val count = configRepo.count
                             fields.count = count

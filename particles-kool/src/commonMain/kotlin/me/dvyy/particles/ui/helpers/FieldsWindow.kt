@@ -14,36 +14,38 @@ abstract class FieldsWindow(
 ) {
     val windowDockable = UiDockable(name, ui.dock)
 
-    val windowSurface = WindowSurface(windowDockable) {
-        surface.sizes = ui.uiSizes.use()
-        surface.colors = this@FieldsWindow.ui.colors
+    val windowSurface by lazy {
+        WindowSurface(ui.ui, windowDockable) {
+            surface.sizes = ui.uiSizes.use()
+            surface.colors = this@FieldsWindow.ui.colors
 
-        modifyWindow()
+            modifyWindow()
 
-        var isMinimizedToTitle by remember(false)
-        val isDocked = windowDockable.isDocked.use()
+            var isMinimizedToTitle by remember(false)
+            val isDocked = windowDockable.isDocked.use()
 
-        Column(Grow.Std, Grow.Std) {
-            TitleBar(
-                windowDockable,
-                isMinimizedToTitle = isMinimizedToTitle,
-                onMinimizeAction = if (!isDocked && !isMinimizedToTitle) {
-                    {
-                        isMinimizedToTitle = true
-                        windowDockable.setFloatingBounds(height = FitContent)
-                    }
-                } else null,
-                onMaximizeAction = if (!isDocked && isMinimizedToTitle) {
-                    { isMinimizedToTitle = false }
-                } else null,
-                onCloseAction = if (isClosable) {
-                    {
-                        ui.closeWindow(this@FieldsWindow)
-                    }
-                } else null
-            )
-            if (!isMinimizedToTitle) {
-                windowContent()
+            Column(Grow.Std, Grow.Std) {
+                TitleBar(
+                    windowDockable,
+                    isMinimizedToTitle = isMinimizedToTitle,
+                    onMinimizeAction = if (!isDocked && !isMinimizedToTitle) {
+                        {
+                            isMinimizedToTitle = true
+                            windowDockable.setFloatingBounds(height = FitContent)
+                        }
+                    } else null,
+                    onMaximizeAction = if (!isDocked && isMinimizedToTitle) {
+                        { isMinimizedToTitle = false }
+                    } else null,
+                    onCloseAction = if (isClosable) {
+                        {
+                            ui.closeWindow(this@FieldsWindow)
+                        }
+                    } else null
+                )
+                if (!isMinimizedToTitle) {
+                    windowContent()
+                }
             }
         }
     }

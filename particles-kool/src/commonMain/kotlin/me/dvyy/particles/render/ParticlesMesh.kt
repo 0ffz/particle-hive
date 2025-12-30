@@ -9,6 +9,7 @@ import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
+import de.fabmax.kool.util.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -18,6 +19,8 @@ import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.helpers.KslInt
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.compute.simulation.SimulationParametersStruct
+import me.dvyy.particles.compute.simulation.SimulationParametersStruct.maxForce
+import me.dvyy.particles.compute.simulation.SimulationParametersStruct.maxVelocity
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import kotlin.math.PI
@@ -49,17 +52,17 @@ class ParticlesMesh(
             }
         }
         scope.launch {
-            configRepository.config.map { it.simulation }.distinctUntilChanged().collectLatest {
-                colorShader.uniformStruct("params", ::SimulationParametersStruct).set {
-                    maxVelocity.set(it.maxVelocity.toFloat())
-                    maxForce.set(it.maxForce.toFloat())
+            configRepository.config.map { it.simulation }.distinctUntilChanged().collectLatest { new ->
+                colorShader.uniformStruct("params", SimulationParametersStruct).set {
+                    it.maxVelocity.set(new.maxVelocity.toFloat())
+                    it.maxForce.set(new.maxForce.toFloat())
                 }
             }
         }
     }
 
     val colorShader = KslComputeShader("Color particles") {
-        val simulationParams = uniformStruct("params", provider = ::SimulationParametersStruct)
+        val simulationParams = uniformStruct("params", SimulationParametersStruct)
         val colorType = uniformInt1("colorType")
         val recolorGradient = uniformInt1("recolorGradient")
 
@@ -85,12 +88,12 @@ class ParticlesMesh(
                         val clusterId = int1Var(clusterBuffer[offset])
                         newColor set randomColor(clusterId)
                     }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
-                        val maxVelocity = simulationParams.struct.maxVelocity.ksl
+                        val maxVelocity = simulationParams[maxVelocity]
                         val velocity = float1Var(length(velocitiesBuffer[offset]))
                         val input = clamp(velocity / maxVelocity, 0f.const, 1f.const)
                         newColor set gradient(input)
                     }.elseIf(colorType eq ParticleColor.FORCE.ordinal.const) {
-                        val maxForce = simulationParams.struct.maxForce.ksl
+                        val maxForce = simulationParams[maxForce]
                         val force = float1Var(length(forcesBuffer[offset]))
                         val input = clamp(pow(force / log(maxForce), 0.5f.const), 0f.const, 1f.const)
                         newColor set gradient(input)

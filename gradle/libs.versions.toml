@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.2.0"
-kool = "0.17.0"
+kool = "0.19.0"
 lwjgl = "3.3.5"
 coroutines = "1.8.0"
 kaml = "0.67.0"

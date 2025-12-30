@@ -6,6 +6,7 @@ import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ui2.Ui2Shader
 import de.fabmax.kool.modules.ui2.UiNode
 import de.fabmax.kool.modules.ui2.UiRenderer
+import de.fabmax.kool.modules.ui2.UiVertexLayout
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
 import de.fabmax.kool.scene.Mesh
@@ -22,9 +23,9 @@ import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import kotlin.math.min
 
 class GraphNode(val layerName: String) : UiRenderer<UiNode> {
-    private val graphMesh: Mesh
-    private val graphGeom = IndexedVertexList(Ui2Shader.UI_MESH_ATTRIBS)
-    private val graphBuilder = MeshBuilder(graphGeom).apply { isInvertFaceOrientation = true }
+    private val graphMesh: Mesh<UiVertexLayout>
+    private val graphGeom = IndexedVertexList(UiVertexLayout, usage = Usage.DYNAMIC)
+    private val graphBuilder = MeshBuilder<UiVertexLayout>(graphGeom).apply { isInvertFaceOrientation = true }
     private val clipBounds = MutableVec4f()
     private var width = 0
     private var height = 0
@@ -124,7 +125,6 @@ class GraphNode(val layerName: String) : UiRenderer<UiNode> {
 
     init {
         graphMesh = Mesh(graphGeom, name = "GraphNode")
-        graphMesh.geometry.usage = Usage.DYNAMIC
         graphMesh.shader = Ui2Shader()
     }
 

@@ -2,6 +2,7 @@ package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString
+import de.fabmax.kool.util.Time
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
@@ -41,8 +42,8 @@ class SimulationStatisticsWindow(
     ) {
         modifier.width(Grow.Std)
         surface.onEachFrame {
-            fps.set(it.fps)
-            simsPs.set(it.fps * viewModel.passesPerFrame.value)
+            fps.set(Time.fps)
+            simsPs.set(Time.fps * viewModel.passesPerFrame.value)
         }
         Column(Grow.Std, Grow.Std) {
             Category("Stats") {

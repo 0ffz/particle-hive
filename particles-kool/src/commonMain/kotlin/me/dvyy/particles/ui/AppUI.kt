@@ -8,7 +8,7 @@ import de.fabmax.kool.modules.ui2.docking.UiDockable
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.MdColor
-import de.fabmax.kool.util.launchDelayed
+import de.fabmax.kool.util.delayFrames
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -18,6 +18,7 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.getFlow
 import me.dvyy.particles.helpers.asMutableState
+import me.dvyy.particles.helpers.launch
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
@@ -42,7 +43,6 @@ class AppUI(
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
         copy(background = background.withAlpha(0.9f))
     }
-    val dock = Dock("Dock")
 
     val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, scope, paramsViewModel, paramOverrides)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
@@ -50,60 +50,63 @@ class AppUI(
     val visualsWindow = VisualOptionsWindow(this@AppUI, settings, scope)
     val projectSwitcherWindow = ProjectSwitcherWindow(this@AppUI, viewModel, settings, scope)
 
-    val ui = UiScene {
-        dock.dockingSurface.colors = colors
-        dock.dockingSurfaceOverlay.colors = colors
-        dock.dockingPaneComposable = Composable {
-            Row(Grow.Std, Grow.Std) {
-                modifier.margin(horizontal = sidebarSize)
-                dock.root()
-            }
-        }
-
-        addPanelSurface {
-            surface.sizes = this@AppUI.uiSizes.use()
-            surface.colors = this@AppUI.colors
-            modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
-            Box(width = sidebarSize) {
-                windowSelector(
-                    listOf(uniformsWindow, textEditorWindow, projectSwitcherWindow),
-                    "0:row/0:leaf",
-                    isLeft = true
-                )
-            }
-        }
-        addPanelSurface {
-            surface.sizes = this@AppUI.uiSizes.use()
-            surface.colors = this@AppUI.colors
-            modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
-                .alignX(AlignmentX.End)
-            Box(width = sidebarSize) {
-                windowSelector(listOf(statsWindow, visualsWindow), "0:row/2:leaf", isLeft = false)
-            }
-        }
-        addNode(dock)
-
-        dock.createNodeLayout(
-            listOf(
-                "0:row",
-                "0:row/0:leaf",
-                "0:row/1:leaf",
-                "0:row/2:leaf"
-            )
-        )
-        dock.getLeafAtPath("0:row/0:leaf")?.width?.onChange { old, new ->
-            val px = (new as? Dp)?.value ?: return@onChange
-            settings.ui.leftSidebarWidth.update { px }
-        }
-        dock.getLeafAtPath("0:row/2:leaf")?.width?.onChange { old, new ->
-            val px = (new as? Dp)?.value ?: return@onChange
-            settings.ui.rightSidebarWidth.update { px }
-        }
-        val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
-        dock.getLeafAtPath("0:row/1:leaf")?.dock(centerSpacer)
-    }
+    val ui = UiScene {}
+    val dock = Dock(ui, "Dock")
 
     init {
+        ui.apply {
+            dock.dockingSurface.colors = colors
+            dock.dockingSurfaceOverlay.colors = colors
+            dock.dockingPaneComposable = Composable {
+                Row(Grow.Std, Grow.Std) {
+                    modifier.margin(horizontal = sidebarSize)
+                    dock.root()
+                }
+            }
+
+            addPanelSurface {
+                surface.sizes = this@AppUI.uiSizes.use()
+                surface.colors = this@AppUI.colors
+                modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
+                Box(width = sidebarSize) {
+                    windowSelector(
+                        listOf(uniformsWindow, textEditorWindow, projectSwitcherWindow),
+                        "0:row/0:leaf",
+                        isLeft = true
+                    )
+                }
+            }
+            addPanelSurface {
+                surface.sizes = this@AppUI.uiSizes.use()
+                surface.colors = this@AppUI.colors
+                modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
+                    .alignX(AlignmentX.End)
+                Box(width = sidebarSize) {
+                    windowSelector(listOf(statsWindow, visualsWindow), "0:row/2:leaf", isLeft = false)
+                }
+            }
+            addNode(dock)
+
+            dock.createNodeLayout(
+                listOf(
+                    "0:row",
+                    "0:row/0:leaf",
+                    "0:row/1:leaf",
+                    "0:row/2:leaf"
+                )
+            )
+            dock.getLeafAtPath("0:row/0:leaf")?.width?.onChange { old, new ->
+                val px = (new as? Dp)?.value ?: return@onChange
+                settings.ui.leftSidebarWidth.update { px }
+            }
+            dock.getLeafAtPath("0:row/2:leaf")?.width?.onChange { old, new ->
+                val px = (new as? Dp)?.value ?: return@onChange
+                settings.ui.rightSidebarWidth.update { px }
+            }
+            val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
+            dock.getLeafAtPath("0:row/1:leaf")?.dock(centerSpacer)
+        }
+
         scope.launch { settings.ui.scale.collect { uiSizes.set(it.size) } }
     }
 
@@ -132,10 +135,9 @@ class AppUI(
             }
         }
 
-        ui.apply {
-            launchDelayed(1) {
-                window.windowSurface.isFocused.set(true)
-            }
+        ui.launch {
+            delayFrames(1)
+            window.windowSurface.isFocused.set(true)
         }
     }
 

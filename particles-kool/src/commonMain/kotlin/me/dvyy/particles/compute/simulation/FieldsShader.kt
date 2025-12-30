@@ -25,7 +25,7 @@ class FieldsShader(
             val gridCells = uniformInt3("gridCells")
             val dT = uniformFloat1("dT")
             val count = uniformInt1("count")
-            val params = uniformStruct("params", provider = ::SimulationParametersStruct)
+            val params = uniformStruct("params", SimulationParametersStruct)
             val boxMax = uniformFloat3("boxMax")
 
             // Storage buffers
@@ -45,7 +45,7 @@ class FieldsShader(
                 it.createFunction()
             }
             forcesDef.forces.forEach {
-                it.kslForcesStruct
+                it.forceParameters
             }
 
             main {
@@ -57,7 +57,7 @@ class FieldsShader(
                 val velocity = float3Var(velocities[id].xyz) //v(t + dt/2)
                 val currForce = float3Var(forces[id].xyz)
                 val particleType = int1Var(particleTypes[id])
-                val params = structVar(params).struct
+                val params = structVar(params)
 
                 // Compute grid indices based on the particle position
                 val grid = int3Var((position / gridSize).toInt3())
@@ -112,19 +112,21 @@ class FieldsShader(
                     val startIndex = int1Var(cellOffsets[localCellId])
                     val endIndexExclusive = int1Var(cellOffsetsEnd[localCellId])
 
-                    fun KslFloat.clampMaxForce() = min(this, params.maxForce.ksl)
+                    fun KslFloat.clampMaxForce() = min(this, params[SimulationParametersStruct.maxForce])
 
                     // Individual forces
                     // TODO apply maxForce to individual forces
-                    forcesDef.individualForces.forEach {
-                        val functionRef = it.force.kslReference
-                        val interaction = structVar(it.interactionFor(particleType)).struct
-                        // TODO avoid conditional branch
-                        `if`(interaction.enabled.ksl eq 1f.const) {
-                            nextForce += functionRef.invoke(
-                                position,
-                                *interaction.parametersAsArray()
-                            )
+                    forcesDef.individualForces.forEach { force ->
+                        val functionRef = force.force.kslReference
+                        val interaction = structVar(force.interactionFor(particleType))
+                        with(force) {
+                            // TODO avoid conditional branch
+                            `if`(interaction[interactionsStruct.enabled] eq 1f.const) {
+                                nextForce += functionRef.invoke(
+                                    position,
+                                    *interaction.parametersAsArray()
+                                )
+                            }
                         }
                     }
                     // Pairwise forces
@@ -144,17 +146,19 @@ class FieldsShader(
                         val pairHash = PairwiseForce.pairHash(particleType, otherType, forcesDef.particleTypeCount)
 
                         // Call invoke each pairwise force function with extracted parameters
-                        forcesDef.pairwiseForces.forEach {
-                            val functionRef = it.force.kslReference
+                        forcesDef.pairwiseForces.forEach { force ->
+                            val functionRef = force.force.kslReference
                             //NOTE necessary for OPENGL to compile
                             //TODO this buffer access adds a good amount of overhead
-                            val interaction = structVar(it.interactionFor(pairHash)).struct
+                            val interaction = structVar(force.interactionFor(pairHash))
                             // For pairs without an interaction paramsMat[0][0] is 0
-                            // TODO avoid conditional branch, again on some vendors multiplication by zero may be nonzero
-                            `if`(interaction.enabled.ksl eq 1f.const) {
-                                forceBetweenParticles += functionRef
-                                    .invoke(dist, localCount, *interaction.parametersAsArray())
-                                    .clampMaxForce()
+                            with(force) {
+                                // TODO avoid conditional branch, again on some vendors multiplication by zero may be nonzero
+                                `if`(interaction[interactionsStruct.enabled] eq 1f.const) {
+                                    forceBetweenParticles += functionRef
+                                        .invoke(dist, localCount, *interaction.parametersAsArray())
+                                        .clampMaxForce()
+                                }
                             }
                         }
 
@@ -169,6 +173,7 @@ class FieldsShader(
                 //TODO make configurable, since lennardJones might not be provided
                 fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
                     .invoke(dist, 1f.const, 5f.const, 0.0001f.const)
+
                 val extraDist = 0.1f.const // Add a small amount of distance so the force is always nonzero
                 nextForce.x += lJ(position.x + extraDist)
                 nextForce.x -= lJ(boxMax.x - position.x + extraDist)
@@ -179,22 +184,22 @@ class FieldsShader(
                     nextForce.z -= lJ(boxMax.z - position.z + extraDist)
                 }
                 // Cap force
-                `if`(length(nextForce) gt params.maxForce.ksl) {
-                    nextForce set normalize(nextForce) * params.maxForce.ksl
+                `if`(length(nextForce) gt params[SimulationParametersStruct.maxForce]) {
+                    nextForce set normalize(nextForce) * params[SimulationParametersStruct.maxForce]
                 }
 
                 // Compute next velocity with Verlet integration
                 val nextVelocity = float3Var(velocity + ((currForce + nextForce) * dT / 2f.const))
                 // Cap velocity and net force to their maximum values
-                `if`(length(nextVelocity) gt params.maxVelocity.ksl) {
-                    nextVelocity set normalize(nextVelocity) * params.maxVelocity.ksl
+                `if`(length(nextVelocity) gt params[SimulationParametersStruct.maxVelocity]) {
+                    nextVelocity set normalize(nextVelocity) * params[SimulationParametersStruct.maxVelocity]
                 }
-                val target = params.targetVelocity.ksl
+                val target = params[SimulationParametersStruct.targetVelocity]
                 val totalSqrtVelocities = float1Var(velocityData[0.const])
                 val average = totalSqrtVelocities / count.toFloat1()
 //                val halved = totalSqrtVelocities/2f.const
 //                val degreesOfFreedom = 2f.const
-                val strength = params.targetVelocityFixStrength.ksl
+                val strength = params[SimulationParametersStruct.targetVelocityFixStrength]
                 // nudge particles towards target velocity
                 nextVelocity set nextVelocity * sqrt(
                     1f.const + (dT * strength) * ((target) / max(
@@ -217,7 +222,7 @@ class FieldsShader(
     var dT by shader.uniform1f("dT")
     var count by shader.uniform1i("count")
     var boxMax by shader.uniform3f("boxMax")
-    var params = shader.uniformStruct("params", ::SimulationParametersStruct)
+    var params = shader.uniformStruct("params", SimulationParametersStruct)
 
     // Storage buffers
     var particle2CellKey by shader.storage("particle2CellKey")
