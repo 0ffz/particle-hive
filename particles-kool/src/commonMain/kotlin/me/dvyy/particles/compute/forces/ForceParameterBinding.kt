@@ -37,17 +37,17 @@ class ForceParameterBinding<T : Force<*>>(
     val force: T,
     private val totalParticles: Int,
 ) {
+    val hashCount = when (force.type) {
+        "pairwise" -> totalParticles * totalParticles
+        "individual" -> totalParticles
+        else -> error("Invalid force type")
+    }
     private val parameterMatrices = mutableMapOf<ParticleSet, FloatArray>()
     private val numParameters = force.parameters.size
 
     val interactionsStruct = InteractionStruct()
     val forceParametersStruct = ForceParametersStruct()
 
-    val hashCount = when (force.type) {
-        "pairwise" -> totalParticles * totalParticles
-        "individual" -> totalParticles
-        else -> error("Invalid force type")
-    }
 
     val uniformName = "${force.name}_parameters"
     val parameterNames = force.parameters.map { it.name }
@@ -79,13 +79,13 @@ class ForceParameterBinding<T : Force<*>>(
         ubo.set {
             repeat(it.interactions.arraySize) { i ->
                 set(it.interactions, i) { interaction ->
-                    interaction.enabled.set(false)
+                    interaction.enabled.set(0f)
                     interaction.parameters.forEach { it.set(0f) }
                 }
             }
             parameterMatrices.forEach { (set, params) ->
                 set(it.interactions, set.hash) {
-                    it.enabled.set(true)
+                    it.enabled.set(1f)
                     it.parameters.forEachIndexed { i, param -> param.set(params[i]) }
                 }
             }
@@ -117,7 +117,7 @@ class ForceParameterBinding<T : Force<*>>(
     }
 
     inner class InteractionStruct : Struct("InteractionStruct_${force.name}", MemoryLayout.Std140) {
-        val enabled = bool1("enabled")
+        val enabled = float1("enabled")
         val parameters = (0..<numParameters).map { float1() }
 
         init {
@@ -139,7 +139,7 @@ class ForceParameterBinding<T : Force<*>>(
     }
 
     inner class ForceParametersStruct : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std140) {
-        val interactions = structArray(interactionsStruct, hashCount.coerceAtLeast(1), "interactions")
+        val interactions = structArray(interactionsStruct, hashCount, "interactions")
     }
 }
 

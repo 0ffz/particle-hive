@@ -27,7 +27,7 @@ class FieldsShader(
                 main {
                     // Get the particle id from the global invocation (using only x as in GLSL)
                     val id = int1Var(inGlobalInvocationId.x.toInt1(), "id")
-                    val params = structVar(params)
+                    val params = structVar(params, "params")
                     val particle = particle(id, "particle") // Load current particle properties
                     // p(t + dt); since half step runs before this
                     // v(t + dt/2)
@@ -67,7 +67,7 @@ class FieldsShader(
                         val interaction = structVar(force.interactionFor(particle.type))
                         // TODO avoid conditional branch
                         with(force) {
-                            `if`(interaction[force.binding.interactionsStruct.enabled] eq true.const) {
+                            `if`(interaction[force.binding.interactionsStruct.enabled] eq 1f.const) {
                                 nextForce += force.function.invoke(
                                     position = particle.position,
                                     parameters = interaction.parametersAsArray()
@@ -105,7 +105,7 @@ class FieldsShader(
                                 // For pairs without an interaction paramsMat[0][0] is 0
                                 with(force) {
                                     // TODO avoid conditional branch, again on some vendors multiplication by zero may be nonzero
-                                    `if`(interaction[force.binding.interactionsStruct.enabled] eq true.const) {
+                                    `if`(interaction[force.binding.interactionsStruct.enabled] eq 1f.const) {
                                         forceBetweenParticles += force.function
                                             .invoke(
                                                 distance = dist,
@@ -150,12 +150,13 @@ class FieldsShader(
                     }
 
                     // === Nudge particles towards target velocity ===
-                    val target by params[SimulationParametersStruct.targetVelocity]
+                    //TODO using delegate for these generates `params.targetVelocity` as the field name, causing a compilation error on WGPU
+                    val targetVelocity = float1Var(params[SimulationParametersStruct.targetVelocity])
                     val totalSqrtVelocities by velocityData[0.const]
                     val average by totalSqrtVelocities / count.toFloat1()
-                    val strength by params[SimulationParametersStruct.targetVelocityFixStrength]
+                    val strength = float1Var(params[SimulationParametersStruct.targetVelocityFixStrength])
                     nextVelocity set nextVelocity * sqrt(
-                        1f.const + (dT * strength) * ((target) / max(
+                        1f.const + (dT * strength) * ((targetVelocity) / max(
                             average,
                             0.1f.const
                         ) - 1f.const)
@@ -165,8 +166,8 @@ class FieldsShader(
                     velocities[id] = float4Value(nextVelocity, 0f)
 
                     // === Export data buffer based on defined type ===
-                    val exportDataType by params[SimulationParametersStruct.exportDataType]
-                    val rescaleBy by params[SimulationParametersStruct.exportDataRescale]
+                    val exportDataType = int1Var(params[SimulationParametersStruct.exportDataType])
+                    val rescaleBy = float1Var(params[SimulationParametersStruct.exportDataRescale])
                     `if`(exportDataType eq ExportDataType.LOCAL_NEIGHBOURS.ordinal.const) {
                         exportedData[id] = localCount * rescaleBy
                     }.elseIf(exportDataType eq ExportDataType.CELL_PARTICLE_COUNT.ordinal.const) {
