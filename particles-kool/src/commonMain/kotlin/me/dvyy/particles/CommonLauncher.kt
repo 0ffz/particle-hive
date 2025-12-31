@@ -5,13 +5,14 @@ import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.debugOverlay
 import me.dvyy.particles.compute.forces.Force
+import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.ui.AppSizes
 import me.dvyy.particles.ui.helpers.TRANSPARENT
 
-fun launchApp(ctx: KoolContext, forces: List<Force>) {
+fun launchApp(ctx: KoolContext, forces: List<Force<*>>, wallForce: PairwiseForce) {
     val baseModule = persistentModule(ctx)
 
-    val manager = SceneManager(ctx, baseModule, forces)
+    val manager = SceneManager(ctx, baseModule, forces, wallForce)
 
     ctx.scenes += debugOverlay()
     ctx.scenes += UiScene("version-info") {

@@ -12,7 +12,6 @@ kotlin {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
     jvm {
-        withJava()
     }
     jvmToolchain(21)
 

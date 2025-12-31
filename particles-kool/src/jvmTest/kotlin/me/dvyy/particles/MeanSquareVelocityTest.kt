@@ -10,7 +10,6 @@ import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.dsl.Size
 import me.dvyy.particles.helpers.kool.KoolTest
-import me.dvyy.particles.ui.nodes.execManyShaders
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
@@ -38,17 +37,18 @@ class MeanSquareVelocityTest : KoolTest() {
             }
         }
         buffers.velocitiesBuffer.uploadData(velocities)
-        val result = execManyShaders(scene, setup = {
-            shader.addTo(it)
-        }, read = {
-            val result = Float32Buffer(buffers.count)
-            shader.outputBuffer.downloadData(result)
-            result
-        }).await()
+        TODO()
+//        val result = execManyShaders(scene, setup = {
+//            shader.addTo(it)
+//        }, read = {
+//            val result = Float32Buffer(buffers.count)
+//            shader.outputBuffer.downloadData(result)
+//            result
+//        }).await()
 
         // 12 = 2^2 + 2^2 + 2^2 is the square velocity for each entry, there are count total entries
         // first value should be the sum of all square velocities
-        assert(result.toArray().toList().first() == 12f * count)
-        println(result.toArray().toList())
+//        assert(result.toArray().toList().first() == 12f * count)
+//        println(result.toArray().toList())
     }
 }

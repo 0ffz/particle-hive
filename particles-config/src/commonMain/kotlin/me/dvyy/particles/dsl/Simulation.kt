@@ -12,6 +12,7 @@ data class Simulation(
     val maxForce: Double = 100000.0,
     val targetVelocity: Double = 0.0,
     val targetVelocityStrength: Double = 0.0,
+    val exportData: ExportData = ExportData(),
     val threeDimensions: Boolean = false,
     val passesPerFrame: Int = 100,
     val size: Size = Size(),

@@ -4,13 +4,14 @@ import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.pipeline.ComputeShader
 import de.fabmax.kool.scene.Scene
-import de.fabmax.kool.util.launchOnMainThread
+import de.fabmax.kool.util.BackendScope
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.launch
 
 inline fun <T> execManyShaders(
     scene: Scene,
-    setup: (ComputePass) -> Unit,
+    crossinline setup: (ComputePass) -> Unit,
     crossinline read: suspend () -> T,
 ): Deferred<T> {
     val computePass = ComputePass("single-shot")
@@ -21,7 +22,7 @@ inline fun <T> execManyShaders(
 
     computePass.onAfterCollect {
         computePass.isEnabled = false
-        launchOnMainThread {
+        BackendScope.launch {
             try {
                 deferred.complete(read())
             } catch (e: Exception) {
@@ -33,7 +34,6 @@ inline fun <T> execManyShaders(
     }
 
     return deferred
-
 }
 
 inline fun <T> execShader(

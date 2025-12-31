@@ -3,19 +3,20 @@ package me.dvyy.particles
 import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJvm
 import de.fabmax.kool.math.Vec2i
-import de.fabmax.kool.pipeline.backend.vk.RenderBackendVk
+import de.fabmax.kool.pipeline.backend.gl.RenderBackendGl
 import me.dvyy.particles.compute.forces.Force
+import me.dvyy.particles.compute.forces.PairwiseForce
 
-actual fun launchParticles(forces: List<Force>, args: Array<String>) {
+actual fun launchParticles(forces: List<Force<*>>, wallForce: PairwiseForce, args: Array<String>) {
     KoolApplication(
         config = KoolConfigJvm(
             windowTitle = "Particle HIVE",
             isVsync = false,
             maxFrameRate = 500,
-            renderBackend = RenderBackendVk,
+            renderBackend = RenderBackendGl,
             windowSize = Vec2i(1920, 1080)
         )
     ) {
-        launchApp(ctx, forces)
+        launchApp(ctx, forces, wallForce)
     }
 }

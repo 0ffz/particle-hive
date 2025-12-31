@@ -18,7 +18,6 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.getFlow
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.helpers.launch
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
@@ -135,7 +134,7 @@ class AppUI(
             }
         }
 
-        ui.launch {
+        ui.coroutineScope.launch {
             delayFrames(1)
             window.windowSurface.isFocused.set(true)
         }

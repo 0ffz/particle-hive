@@ -5,84 +5,36 @@ import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.compute.ParticleBuffers
-import me.dvyy.particles.compute.forces.ForcesDefinition
-import me.dvyy.particles.compute.forces.PairwiseForce
+import me.dvyy.particles.compute.forces.ForceBindings
+import me.dvyy.particles.compute.forces.PairwiseForceFunction
 import me.dvyy.particles.compute.helpers.KslFloat
 import me.dvyy.particles.compute.helpers.cellId
 import me.dvyy.particles.compute.helpers.forNearbyGridCells
+import me.dvyy.particles.compute.helpers.types.particle
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.dsl.ExportDataType
 
 class FieldsShader(
     val configRepo: ConfigRepository,
     val buffers: ParticleBuffers,
-    val forcesDef: ForcesDefinition,
+    val forcesDef: ForceBindings,
+    val pass: Int,
 ) {
-    val shader = KslComputeShader("Fields") {
+    val shader = KslComputeShader("Fields $pass") {
         computeStage(WORK_GROUP_SIZE) {
-            // Uniforms
-            val gridSize = uniformFloat1("gridSize")
-            val gridCells = uniformInt3("gridCells")
-            val dT = uniformFloat1("dT")
-            val count = uniformInt1("count")
-            val params = uniformStruct("params", SimulationParametersStruct)
-            val boxMax = uniformFloat3("boxMax")
+            FieldsShaderProgram(this, forcesDef, configRepo).apply {
+                main {
+                    // Get the particle id from the global invocation (using only x as in GLSL)
+                    val id = int1Var(inGlobalInvocationId.x.toInt1(), "id")
+                    val params = structVar(params)
+                    val particle = particle(id, "particle") // Load current particle properties
+                    // p(t + dt); since half step runs before this
+                    // v(t + dt/2)
+                    // a(t + dT)
+                    val nextForce by Vec3f.ZERO.const
 
-            // Storage buffers
-            val particle2CellKey = storage<KslInt1>("particle2CellKey")
-            val cellOffsets = storage<KslInt1>("cellOffsets")
-            val cellOffsetsEnd = storage<KslInt1>("cellOffsetsEnd")
-            val positions = storage<KslFloat4>("positions")
-            val velocities = storage<KslFloat4>("velocities")
-            val forces = storage<KslFloat4>("forces")
-            val localNeighbours = storage<KslFloat1>("localNeighbours")
-            val velocityData = storage<KslFloat1>("velocityData")
-
-            val particleTypes = storage<KslInt1>("particleTypes")
-
-            // Define all force functions, create uniforms for their parameters
-            forcesDef.forceTypes.forEach {
-                it.createFunction()
-            }
-            forcesDef.forces.forEach {
-                it.forceParameters
-            }
-
-            main {
-                // Get the particle id from the global invocation (using only x as in GLSL)
-                val id = int1Var(inGlobalInvocationId.x.toInt1())
-                // Load current particle properties
-                // Extract the 2D position from the stored vec4
-                val position = float3Var(positions[id].xyz) //p(t + dt); since half step runs before this
-                val velocity = float3Var(velocities[id].xyz) //v(t + dt/2)
-                val currForce = float3Var(forces[id].xyz)
-                val particleType = int1Var(particleTypes[id])
-                val params = structVar(params)
-
-                // Compute grid indices based on the particle position
-                val grid = int3Var((position / gridSize).toInt3())
-
-                // a(t + dT)
-                val nextForce = float3Var(Vec3f.ZERO.const)
-
-                // Loop over neighboring grid cells (x and y offsets from -1 to 1)
-                val is3d = configRepo.config.value.simulation.threeDimensions
-
-                // TODO move into preprocess step for pairwise forces
-                // Calculate local neighbours (as in tersoff)
-                // Given distance between two particles, return a smoothed cutoff from 1 to 0
-                val localCount = float1Var(0f.const)
-
-                forNearbyGridCells(is3d) { offset ->
-                    `if`(any(grid + offset lt 0.const3) or if (is3d) any(((grid + offset) ge gridCells)) else any(((grid + offset).xy ge gridCells.xy))) {
-                        `continue`()
-                    }
-                    // Calculate the neighboring cell id as an integer
-                    val localCellId = int1Var(cellId(grid + offset, gridCells))
-                    val startIndex = int1Var(cellOffsets[localCellId])
-                    val endIndexExclusive = int1Var(cellOffsetsEnd[localCellId])
-
-
+                    // === HELPER FUNCTIONS === TODO move out
                     fun cutoff(
                         distance: KslScalarExpression<KslFloat1>,
                         cutoffD: KslScalarExpression<KslFloat1>,
@@ -93,124 +45,134 @@ class FieldsShader(
                         return 0.5f.const - (0.5f.const * sin((PI_F / 2f).const * (clampedDistance - cutoffR) / cutoffD))
                     }
 
-                    //TODO duplicate code
-                    fori(startIndex, endIndexExclusive) { i ->
-                        val otherPos = float3Var(positions[i].xyz)
-                        `if`(all(otherPos eq position)) { `continue`() }
-                        val direction = float3Var(position - otherPos)
-                        val dist = float1Var(length(direction))
-                        localCount += cutoff(dist, 0.2f.const, 3f.const) //TODO cutoff function
-                    }
-                }
-
-                forNearbyGridCells(is3d) { offset ->
-                    `if`(any(grid + offset lt 0.const3) or if (is3d) any(((grid + offset) ge gridCells)) else any(((grid + offset).xy ge gridCells.xy))) {
-                        `continue`()
-                    }
-                    // Calculate the neighboring cell id as an integer
-                    val localCellId = int1Var(cellId(grid + offset, gridCells))
-                    val startIndex = int1Var(cellOffsets[localCellId])
-                    val endIndexExclusive = int1Var(cellOffsetsEnd[localCellId])
-
                     fun KslFloat.clampMaxForce() = min(this, params[SimulationParametersStruct.maxForce])
 
-                    // Individual forces
+                    // === Pre-pass to calculate data that requires neighbours ===
+                    // TODO move into preprocess step for pairwise forces
+                    // Calculate local neighbours (as in tersoff)
+                    // Given distance between two particles, return a smoothed cutoff from 1 to 0
+                    val localCount by 0f.const
+                    forNearbyGridCells(particle.cell) { neighbourCell ->
+                        neighbourCell.forEachParticle { other ->
+                            `if`(all(other.position eq particle.position)) { `continue`() }
+                            val direction by particle.position - other.position
+                            val dist by length(direction)
+                            localCount += cutoff(dist, 0.2f.const, 3f.const) //TODO cutoff function
+                        }
+                    }
+
+                    // === Individual forces ===
                     // TODO apply maxForce to individual forces
-                    forcesDef.individualForces.forEach { force ->
-                        val functionRef = force.force.kslReference
-                        val interaction = structVar(force.interactionFor(particleType))
+                    individualForces.forEach { force ->
+                        val interaction = structVar(force.interactionFor(particle.type))
+                        // TODO avoid conditional branch
                         with(force) {
-                            // TODO avoid conditional branch
-                            `if`(interaction[interactionsStruct.enabled] eq 1f.const) {
-                                nextForce += functionRef.invoke(
-                                    position,
-                                    *interaction.parametersAsArray()
+                            `if`(interaction[force.binding.interactionsStruct.enabled] eq true.const) {
+                                nextForce += force.function.invoke(
+                                    position = particle.position,
+                                    parameters = interaction.parametersAsArray()
                                 )
                             }
                         }
                     }
-                    // Pairwise forces
-                    fori(startIndex, endIndexExclusive) { i ->
-                        val otherPos = (positions[i].xyz)
-                        val otherType = (particleTypes[i])
-                        // TODO this branch slows down perf measurably.
-                        //  On AMD it's not necessary as multiplication by zero wins, but on NVIDIA/Intel it causes an infinity
-                        //  Decide on best way to optimize this out.
-                        `if`(all(otherPos eq position)) { `continue`() }
 
-                        val direction = float3Var(position - otherPos)
-                        val dist = float1Var(length(direction))
-                        val forceBetweenParticles = float1Var(0f.const)
+                    // === Pairwise forces ===
+                    forNearbyGridCells(particle.cell) { neighbourCell ->
+                        neighbourCell.forEachParticle { other ->
 
-                        // Compute a hash based on the particle types
-                        val pairHash = PairwiseForce.pairHash(particleType, otherType, forcesDef.particleTypeCount)
+                            // TODO this branch slows down perf measurably.
+                            //  On AMD it's not necessary as multiplication by zero wins, but on NVIDIA/Intel it causes an infinity.
+                            //  It may be possible to optimize a good bit by only placing a conditional into the current cell and interating over all other cells
+                            //  with a for loop, however this doubles generated code size.
+                            `if`(all(other.position eq particle.position)) { `continue`() }
 
-                        // Call invoke each pairwise force function with extracted parameters
-                        forcesDef.pairwiseForces.forEach { force ->
-                            val functionRef = force.force.kslReference
-                            //NOTE necessary for OPENGL to compile
-                            //TODO this buffer access adds a good amount of overhead
-                            val interaction = structVar(force.interactionFor(pairHash))
-                            // For pairs without an interaction paramsMat[0][0] is 0
-                            with(force) {
-                                // TODO avoid conditional branch, again on some vendors multiplication by zero may be nonzero
-                                `if`(interaction[interactionsStruct.enabled] eq 1f.const) {
-                                    forceBetweenParticles += functionRef
-                                        .invoke(dist, localCount, *interaction.parametersAsArray())
-                                        .clampMaxForce()
+                            val direction by particle.position - other.position
+                            val dist by length(direction)
+                            val forceBetweenParticles by 0f.const
+
+                            // Compute a hash based on the particle types
+                            val pairHash = PairwiseForceFunction.pairHash(
+                                particle.type,
+                                other.type,
+                                forceBindings.particleTypeCount
+                            )
+
+                            // Call invoke each pairwise force function with extracted parameters
+                            pairwiseForces.forEach { force ->
+                                //NOTE necessary for OPENGL to compile
+                                //TODO this buffer access adds a good amount of overhead
+                                val interaction = structVar(force.interactionFor(pairHash))
+                                // For pairs without an interaction paramsMat[0][0] is 0
+                                with(force) {
+                                    // TODO avoid conditional branch, again on some vendors multiplication by zero may be nonzero
+                                    `if`(interaction[force.binding.interactionsStruct.enabled] eq true.const) {
+                                        forceBetweenParticles += force.function
+                                            .invoke(
+                                                distance = dist,
+                                                localCount = localCount,
+                                                parameters = interaction.parametersAsArray()
+                                            )
+                                            .clampMaxForce()
+                                    }
                                 }
                             }
-                        }
 
-                        nextForce += normalize(direction) * forceBetweenParticles
+                            nextForce += normalize(direction) * forceBetweenParticles
+                        }
+                    }
+
+
+                    // --- Begin wall repulsion snippet ---
+                    // Define simulation box boundaries
+                    // Wall repulsion
+
+                    //TODO make configurable, since lennardJones might not be provided
+                    val lJ = wallForce
+                    val extraDist = 0.1f.const // Add a small amount of distance so the force is always nonzero
+                    nextForce.x += lJ(particle.position.x + extraDist)
+                    nextForce.x -= lJ(boxMax.x - particle.position.x + extraDist)
+                    nextForce.y += lJ(particle.position.y + extraDist)
+                    nextForce.y -= lJ(boxMax.y - particle.position.y + extraDist)
+                    `if`(boxMax.z ne 0f.const) {
+                        nextForce.z += lJ(particle.position.z + extraDist)
+                        nextForce.z -= lJ(boxMax.z - particle.position.z + extraDist)
+                    }
+                    // Cap force
+                    `if`(length(nextForce) gt params[SimulationParametersStruct.maxForce]) {
+                        nextForce set normalize(nextForce) * params[SimulationParametersStruct.maxForce]
+                    }
+
+                    // Compute next velocity with Verlet integration
+                    val nextVelocity by particle.velocity + ((particle.currForce + nextForce) * dT / 2f.const)
+                    // Cap velocity and net force to their maximum values
+                    `if`(length(nextVelocity) gt params[SimulationParametersStruct.maxVelocity]) {
+                        nextVelocity set normalize(nextVelocity) * params[SimulationParametersStruct.maxVelocity]
+                    }
+
+                    // === Nudge particles towards target velocity ===
+                    val target by params[SimulationParametersStruct.targetVelocity]
+                    val totalSqrtVelocities by velocityData[0.const]
+                    val average by totalSqrtVelocities / count.toFloat1()
+                    val strength by params[SimulationParametersStruct.targetVelocityFixStrength]
+                    nextVelocity set nextVelocity * sqrt(
+                        1f.const + (dT * strength) * ((target) / max(
+                            average,
+                            0.1f.const
+                        ) - 1f.const)
+                    )
+
+                    forces[id] = float4Value(nextForce, 0f)
+                    velocities[id] = float4Value(nextVelocity, 0f)
+
+                    // === Export data buffer based on defined type ===
+                    val exportDataType by params[SimulationParametersStruct.exportDataType]
+                    val rescaleBy by params[SimulationParametersStruct.exportDataRescale]
+                    `if`(exportDataType eq ExportDataType.LOCAL_NEIGHBOURS.ordinal.const) {
+                        exportedData[id] = localCount * rescaleBy
+                    }.elseIf(exportDataType eq ExportDataType.CELL_PARTICLE_COUNT.ordinal.const) {
+                        exportedData[id] = (cellOffsetsEnd[cellId(particle.cell, gridCells)] - cellOffsets[cellId(particle.cell, gridCells)]).toFloat1() * rescaleBy
                     }
                 }
-
-
-                // --- Begin wall repulsion snippet ---
-                // Define simulation box boundaries
-                // Wall repulsion
-                //TODO make configurable, since lennardJones might not be provided
-                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-                    .invoke(dist, 1f.const, 5f.const, 0.0001f.const)
-
-                val extraDist = 0.1f.const // Add a small amount of distance so the force is always nonzero
-                nextForce.x += lJ(position.x + extraDist)
-                nextForce.x -= lJ(boxMax.x - position.x + extraDist)
-                nextForce.y += lJ(position.y + extraDist)
-                nextForce.y -= lJ(boxMax.y - position.y + extraDist)
-                `if`(boxMax.z ne 0f.const) {
-                    nextForce.z += lJ(position.z + extraDist)
-                    nextForce.z -= lJ(boxMax.z - position.z + extraDist)
-                }
-                // Cap force
-                `if`(length(nextForce) gt params[SimulationParametersStruct.maxForce]) {
-                    nextForce set normalize(nextForce) * params[SimulationParametersStruct.maxForce]
-                }
-
-                // Compute next velocity with Verlet integration
-                val nextVelocity = float3Var(velocity + ((currForce + nextForce) * dT / 2f.const))
-                // Cap velocity and net force to their maximum values
-                `if`(length(nextVelocity) gt params[SimulationParametersStruct.maxVelocity]) {
-                    nextVelocity set normalize(nextVelocity) * params[SimulationParametersStruct.maxVelocity]
-                }
-                val target = params[SimulationParametersStruct.targetVelocity]
-                val totalSqrtVelocities = float1Var(velocityData[0.const])
-                val average = totalSqrtVelocities / count.toFloat1()
-//                val halved = totalSqrtVelocities/2f.const
-//                val degreesOfFreedom = 2f.const
-                val strength = params[SimulationParametersStruct.targetVelocityFixStrength]
-                // nudge particles towards target velocity
-                nextVelocity set nextVelocity * sqrt(
-                    1f.const + (dT * strength) * ((target) / max(
-                        average,
-                        0.1f.const
-                    ) - 1f.const)
-                )
-
-                forces[id] = float4Value(nextForce, 0f)
-                velocities[id] = float4Value(nextVelocity, 0f)
-                localNeighbours[id] = localCount
             }
         }
 
@@ -230,7 +192,7 @@ class FieldsShader(
     var cellOffsetsEnd by shader.storage("cellOffsetsEnd")
     var positions by shader.storage("positions")
     var velocities by shader.storage("velocities")
-    var localNeighbours by shader.storage("localNeighbours")
+    var exportedData by shader.storage("exportedData")
     var forces by shader.storage("forces")
     var particleTypes by shader.storage("particleTypes")
     var velocityData by shader.storage("velocityData")

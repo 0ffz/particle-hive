@@ -138,6 +138,7 @@ class GPUSort {
                         stepIndexU = stepIndex
                         onBeforeDispatch {
                             pipeline.swapPipelineData("$stageIndex, $stepIndex")
+                            pipeline.captureBuffer()
                         }
                     }
                 }

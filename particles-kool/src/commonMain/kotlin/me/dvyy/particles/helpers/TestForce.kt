@@ -1,14 +1,14 @@
 package me.dvyy.particles.helpers
 
 import de.fabmax.kool.modules.ksl.lang.times
-import me.dvyy.particles.compute.forces.PairwiseForce
-import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
+import me.dvyy.particles.compute.forces.buildForce
 
-internal object TestForce : PairwiseForce("test_force") {
-    val scalar = param<Float>("scalar")
-    override fun KslPairwiseFunction.createFunction() {
+internal val TestForce = buildForce("test_force") {
+    val scalar = paramFloat("scalar")
+
+    pairwise { distance, localCount ->
         body {
-            scalar.asShaderParam() * sqrt(distance)
+            scalar() * sqrt(distance)
         }
     }
 }

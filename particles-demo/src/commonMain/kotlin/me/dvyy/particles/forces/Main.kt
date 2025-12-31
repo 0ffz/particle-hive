@@ -11,9 +11,10 @@ fun main(args: Array<String>) {
         forces = listOf(
             LennardJones,
             Morse,
-            TersoffSimple,
+            TersoffSimple.force,
             ConstantForce
         ),
+        wallForce = LennardJones,
         args = args
     )
 }

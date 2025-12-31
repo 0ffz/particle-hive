@@ -8,8 +8,8 @@ import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Float32Buffer
+import de.fabmax.kool.util.FrontendScope
 import de.fabmax.kool.util.Int32Buffer
-import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
 import kotlinx.coroutines.CoroutineScope
@@ -124,16 +124,16 @@ class ParticlesViewModel(
         buffers.initializeParticlesBuffer()
     }
 
-    fun restartSimulation() = launchOnMainThread { // scope will get cancelled during reload, so we use main thread
+    fun restartSimulation() = FrontendScope.launch { // scope will get cancelled during reload, so we use main thread
         sceneManager.reload()
     }
 
-    fun resetParameters() = scope.launch {
+    fun resetParameters() = FrontendScope.launch {
         paramOverrides.reset()
     }
 
-    fun attemptOpenProject() = launchOnMainThread {
-        val file = FilePicker.pickFile("yml") ?: return@launchOnMainThread
+    fun attemptOpenProject() = FrontendScope.launch {
+        val file = FilePicker.pickFile("yml") ?: return@launch
         println("Opening scene...")
         sceneManager.open(file)
         println("Opened scene")
@@ -142,19 +142,19 @@ class ParticlesViewModel(
         settings.recentProjectPaths.update { (listOf(path.toString()) + it).distinct() }
     }
 
-    fun openProject(path: ConfigPath) = launchOnMainThread {
-        sceneManager.open(path.readContents() ?: return@launchOnMainThread)
+    fun openProject(path: ConfigPath) = FrontendScope.launch {
+        sceneManager.open(path.readContents() ?: return@launch)
         settings.recentProjectPaths.update { listOf(path.toString()) + (it - path.toString()) }
     }
 
-    fun removeProject(path: ConfigPath) = launchOnMainThread {
+    fun removeProject(path: ConfigPath) = FrontendScope.launch {
         settings.recentProjectPaths.update { it - path.toString() }
         if (KoolSystem.platform == Platform.Javascript) {
             FileSystemUtils.clearCachedFileIfExists(path)
         }
     }
 
-    fun saveConfigAs() = launchOnMainThread {
+    fun saveConfigAs() = FrontendScope.launch {
         FileSystemUtils.saveFileAs(
             configRepo.configLines.value.encodeToByteArray(),
             configRepo.currentFile.value?.name ?: "config.yml"
@@ -162,8 +162,8 @@ class ParticlesViewModel(
     }
 
     fun saveClusterData() {
-        launchOnMainThread {
-            val info = buffers.clusterInfo?.sizes ?: return@launchOnMainThread
+        FrontendScope.launch {
+            val info = buffers.clusterInfo?.sizes ?: return@launch
             FileKit.openFileSaver(info.joinToString("\n").encodeToByteArray(), "data", "csv")
         }
     }

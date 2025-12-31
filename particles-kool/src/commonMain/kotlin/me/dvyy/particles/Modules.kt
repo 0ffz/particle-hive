@@ -10,8 +10,6 @@ import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.OffsetsShader
 import me.dvyy.particles.compute.partitioning.ResetBuffers
 import me.dvyy.particles.compute.simulation.FieldsMultiPasses
-import me.dvyy.particles.compute.simulation.FieldsShader
-import me.dvyy.particles.compute.simulation.VerletHalfStepShader
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
@@ -46,8 +44,6 @@ fun shadersModule() = module {
     singleOf(::OffsetsShader)
     singleOf(::GPUSort)
     singleOf(::ResetBuffers)
-    singleOf(::FieldsShader)
-    singleOf(::VerletHalfStepShader)
     singleOf(::FieldsMultiPasses)
     singleOf(::VelocitiesDataShader)
     singleOf(::MeanSquareVelocities)

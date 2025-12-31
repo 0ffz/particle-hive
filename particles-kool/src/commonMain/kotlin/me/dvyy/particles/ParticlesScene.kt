@@ -7,6 +7,7 @@ import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Time
 import de.fabmax.kool.util.releaseWith
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.ParticleBuffers
@@ -19,7 +20,6 @@ import me.dvyy.particles.compute.partitioning.ResetBuffers
 import me.dvyy.particles.compute.simulation.FieldsMultiPasses
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.helpers.launch
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
@@ -48,7 +48,8 @@ class ParticlesScene(
 
         // === COMPUTE ===
         val computePass = ComputePass("Particles Compute")
-        //TODO placing this lower seems to set velocity to zero at the start. Is any kind of velocity read at certain times causing it to zero out?
+        //FIXME placing this lower seems to set velocity to zero at the start. Is any kind of velocity read at certain times causing it to zero out?
+        // (may be related to Vulkan data init issues observed in tests)
         computePass.addTask(particlesMesh.colorShader, configRepo.numGroups) // Recolor particles
         resetBuffers.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
         gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
@@ -61,7 +62,7 @@ class ParticlesScene(
             buffers.particleTypesBuffer,
             buffers.clustersBuffer,
             buffers.colorsBuffer,
-            buffers.localNeighboursBuffer,
+            buffers.exportedDataBuffer,
         )
         val chunked = when (KoolSystem.platform) {
             Platform.Javascript -> buffersToReorder.chunked(3)
@@ -101,10 +102,10 @@ class ParticlesScene(
         var enabledPasses = viewModel.passesPerFrame
         var iter = 0
 
-        launch {
+        coroutineScope.launch {
             settings.ui.targetFPS.collect { iter = 0 }
         }
-        launch {
+        coroutineScope.launch {
             settings.ui.shouldCalibrateFPS.collect {
                 if (it) {
                     iter = 0
@@ -141,7 +142,7 @@ class ParticlesScene(
 
             // Unmark config repo as dirty in one frame, allows compute shaders to read values
             if (clearNextFrame) {
-                configRepo.isDirty = false
+//                configRepo.isDirty = false
                 clearNextFrame = false
             }
             if (configRepo.isDirty) clearNextFrame = true

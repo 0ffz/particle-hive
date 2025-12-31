@@ -4,17 +4,15 @@ import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.util.set
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.data.MeanSquareVelocities
-import me.dvyy.particles.compute.forces.ForcesDefinition
+import me.dvyy.particles.compute.forces.ForceBindings
 import me.dvyy.particles.config.ConfigRepository
 
 class FieldsMultiPasses(
     val buffers: ParticleBuffers,
     val configRepo: ConfigRepository,
-    val halfStep: VerletHalfStepShader,
-    val fields: FieldsShader,
-    val forcesDefinition: ForcesDefinition
+    val forcesDefinition: ForceBindings,
 ) {
-    private fun initBuffers() {
+    private fun initBuffers(fields: FieldsShader, halfStep: VerletHalfStepShader) {
         fields.gridSize = configRepo.gridSize
         fields.gridCells = configRepo.gridCells
         fields.count = configRepo.count
@@ -24,7 +22,7 @@ class FieldsMultiPasses(
         fields.particle2CellKey = buffers.particleGridCellKeys
         fields.positions = buffers.positionBuffer
         fields.velocities = buffers.velocitiesBuffer
-        fields.localNeighbours = buffers.localNeighboursBuffer
+        fields.exportedData = buffers.exportedDataBuffer
         fields.forces = buffers.forcesBuffer
         fields.boxMax = configRepo.boxSize
 
@@ -40,11 +38,10 @@ class FieldsMultiPasses(
     ): List<Pair<ComputePass.Task, ComputePass.Task>> {
         val config = configRepo.config.value
 
-        initBuffers()
-        fields.velocityData = velocitiesShader.output
-        val passes = buildList {
+        val passes = buildList<Pair<ComputePass.Task, ComputePass.Task>> {
             repeat(config.simulation.passesPerFrame) { passIndex ->
-                val halfStep = computePass.addTask(halfStep.shader, numGroups = configRepo.numGroups).apply {
+                val halfStep = VerletHalfStepShader(passIndex)
+                val halfStepTask = computePass.addTask(halfStep.shader, numGroups = configRepo.numGroups).apply {
                     onBeforeDispatch {
                         configRepo.whenDirty {
                             halfStep.dT = simulation.dT.toFloat()
@@ -52,7 +49,8 @@ class FieldsMultiPasses(
                         }
                     }
                 }
-                val fullStep = computePass.addTask(fields.shader, numGroups = configRepo.numGroups).apply {
+                val fields = FieldsShader(configRepo, buffers, forcesDefinition, passIndex)
+                val fullStepTask = computePass.addTask(fields.shader, numGroups = configRepo.numGroups).apply {
                     onBeforeDispatch {
                         configRepo.whenDirty {
                             fields.dT = simulation.dT.toFloat()
@@ -61,6 +59,8 @@ class FieldsMultiPasses(
                                 it.maxForce.set(simulation.maxForce.toFloat())
                                 it.targetVelocity.set(simulation.targetVelocity.toFloat())
                                 it.targetVelocityFixStrength.set(simulation.targetVelocityStrength.toFloat())
+                                it.exportDataType.set(simulation.exportData.type.ordinal)
+                                it.exportDataRescale.set(simulation.exportData.rescale.toFloat())
                             }
                             val count = configRepo.count
                             fields.count = count
@@ -74,7 +74,9 @@ class FieldsMultiPasses(
                         }
                     }
                 }
-                add(halfStep to fullStep)
+                initBuffers(fields, halfStep)
+                fields.velocityData = velocitiesShader.output
+                add(halfStepTask to fullStepTask)
             }
         }
         return passes

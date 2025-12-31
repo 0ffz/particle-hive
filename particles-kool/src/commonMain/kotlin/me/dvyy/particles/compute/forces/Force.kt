@@ -1,30 +1,15 @@
 package me.dvyy.particles.compute.forces
 
 import de.fabmax.kool.modules.ksl.lang.KslComputeStage
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.serializer
 import me.dvyy.particles.compute.forces.builders.FunctionParameter
-import me.dvyy.particles.compute.forces.builders.KslForceFocuntion
 
-abstract class Force(val name: String) {
-    @PublishedApi
-    internal val parameters = mutableListOf<FunctionParameter<*>>()
-
-    protected inline fun <reified T> param(
-        name: String,
-        serializer: KSerializer<T> = serializer<T>(),
-    ): FunctionParameter<T> {
-        val param = FunctionParameter<T>(name, serializer)
-        parameters += param
-        return param
-    }
-
+data class Force<T>(
+    val name: String,
+    val type: String,
+    val parameters: List<FunctionParameter<*>>,
+    val createFunction: KslComputeStage.() -> T,
+) {
     fun parseParameters(config: Map<String, Float>): FloatArray = parameters
         .map { config[it.name] ?: error("Missing parameter ${it.name}") }
         .toFloatArray()
-
-    /** The GPU shader code that defines this force. May require input parameters. */
-    context(stage: KslComputeStage)
-    abstract fun createFunction(): KslForceFocuntion
 }
-

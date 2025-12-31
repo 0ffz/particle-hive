@@ -1,5 +1,8 @@
 simulation:
   count: 100000
+  exportData:
+    type: LOCAL_NEIGHBOURS
+    rescale: 0.04
   minGridSize: 10.0
   dT: 0.01
   conversionRate: 50

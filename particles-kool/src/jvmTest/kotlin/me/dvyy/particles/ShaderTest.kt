@@ -18,7 +18,6 @@ import me.dvyy.particles.helpers.kool.KoolTest
 import me.dvyy.particles.ui.nodes.execManyShaders
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class ShaderTest : KoolTest() {
@@ -75,9 +74,9 @@ class ShaderTest : KoolTest() {
             shader.addTo(it, indicesBuffer, count, Vec3i(count / WORK_GROUP_SIZE + 1, 1, 1))
         }) {
             data.downloadData(result)
-        }.join()
+        }.await()
 
-        assertContentEquals(
+        assertEquals(
             shuffled.toList(),
             result.toArray().toList(),
         )

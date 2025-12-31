@@ -4,8 +4,8 @@ import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import me.dvyy.particles.SceneManager
-import me.dvyy.particles.compute.forces.ForceWithParameters
-import me.dvyy.particles.compute.forces.ForcesDefinition
+import me.dvyy.particles.compute.forces.ForceBindings
+import me.dvyy.particles.compute.forces.ForceParameterBinding
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameter
@@ -24,7 +24,7 @@ data class InteractionUiState(
 )
 
 class ForceParametersViewModel(
-    val forcesDefinition: ForcesDefinition,
+    val forcesDefinition: ForceBindings,
     val config: ConfigRepository,
     val sceneManager: SceneManager,
 ) {
@@ -73,7 +73,7 @@ class ForceParametersViewModel(
 
     fun drawGraphFor(force: String) {
         val scene = sceneManager.mainScene
-        val force = forcesDefinition.forces.find { it.force.name == force } as ForceWithParameters<PairwiseForce>
+        val force = forcesDefinition.forces.find { it.force.name == force } as ForceParameterBinding<PairwiseForce>
         launchOnMainThread {
             graph.renderGpuFunction(scene, force)
         }

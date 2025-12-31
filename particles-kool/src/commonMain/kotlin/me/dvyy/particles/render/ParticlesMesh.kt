@@ -9,6 +9,7 @@ import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
+import de.fabmax.kool.scene.VertexLayouts
 import de.fabmax.kool.util.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -72,7 +73,7 @@ class ParticlesMesh(
         val colorsBuffer = storage<KslFloat4>("colorsBuffer")
         val clusterBuffer = storage<KslInt1>("clusterBuffer")
         val typesBuffer = storage<KslInt1>("typesBuffer")
-        val localNeighboursBuffer = storage<KslFloat1>("localNeighboursBuffer")
+        val exportedDataBuffer = storage<KslFloat1>("exportedDataBuffer")
         val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
 
         computeStage(WORK_GROUP_SIZE) {
@@ -97,8 +98,8 @@ class ParticlesMesh(
                         val force = float1Var(length(forcesBuffer[offset]))
                         val input = clamp(pow(force / log(maxForce), 0.5f.const), 0f.const, 1f.const)
                         newColor set gradient(input)
-                    }.elseIf(colorType eq ParticleColor.NEIGHBOURS.ordinal.const) {
-                        newColor set gradient(clamp(localNeighboursBuffer[offset] / 2f.const, 0f.const, 1f.const))
+                    }.elseIf(colorType eq ParticleColor.EXPORTED_DATA.ordinal.const) {
+                        newColor set gradient(clamp(exportedDataBuffer[offset], 0f.const, 1f.const))
                     }
                 }
 
@@ -113,18 +114,24 @@ class ParticlesMesh(
         storage("velocitiesBuffer", buffers.velocitiesBuffer)
         storage("forcesBuffer", buffers.forcesBuffer)
         storage("colorsBuffer", buffers.colorsBuffer)
-        storage("localNeighboursBuffer", buffers.localNeighboursBuffer)
+        storage("exportedDataBuffer", buffers.exportedDataBuffer)
         storage("typeColorsBuffer", buffers.particleColors)
         storage("radii", buffers.particleRadii)
         storage("typesBuffer", buffers.particleTypesBuffer)
         storage("clusterBuffer", buffers.clustersBuffer)
-        storage("cellIdsBuffer", buffers.particleGridCellKeys)
     }
 
-    val mesh = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
+    val mesh = Mesh(layout = VertexLayouts.PositionNormalTexCoord, name = "Particle Mesh", instances = instances).apply {
         val do3dShading = true
         val tintFarAway = configRepository.boxSize.z > 400f
-        shader = KslShader("test") {
+        generate {
+//            icoSphere {
+//                steps = 2
+//            }
+            fillPolygon(generateCirclePoints(20, radius = 1f))
+        }
+
+        shader = KslShader("Particle mesh shader") {
             val interColor = interStageFloat4()
             val fragPos = interStageFloat4("fragPos")
             val interCenter = interStageFloat3("interCenter")
@@ -213,12 +220,6 @@ class ParticlesMesh(
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
             storage("colorsBuffer", buffers.colorsBuffer)
-        }
-        generate {
-//            icoSphere {
-//                steps = 2
-//            }
-            fillPolygon(generateCirclePoints(20, radius = 1f))
         }
     }
 

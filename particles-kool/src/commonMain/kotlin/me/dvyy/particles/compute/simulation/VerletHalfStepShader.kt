@@ -4,8 +4,8 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
-class VerletHalfStepShader {
-    val shader = KslComputeShader("Fields Half-Step") {
+class VerletHalfStepShader(val pass: Int) {
+    val shader = KslComputeShader("Fields Half-Step $pass") {
         computeStage(WORK_GROUP_SIZE) {
             val dT = uniformFloat1("dT")
             val positions = storage<KslFloat4>("positions")

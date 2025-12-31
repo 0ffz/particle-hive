@@ -17,7 +17,7 @@ import de.fabmax.kool.scene.geometry.Usage
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.Float32Buffer
 import kotlinx.coroutines.Deferred
-import me.dvyy.particles.compute.forces.ForceWithParameters
+import me.dvyy.particles.compute.forces.ForceParameterBinding
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import kotlin.math.min
@@ -44,13 +44,13 @@ class GraphNode(val layerName: String) : UiRenderer<UiNode> {
         )
     }
 
-    suspend fun renderGpuFunction(scene: Scene, force: ForceWithParameters<PairwiseForce>) {
+    suspend fun renderGpuFunction(scene: Scene, force: ForceParameterBinding<PairwiseForce>) {
         val valuesX = FloatArray(256) { it.toFloat() / 256 }
         val valuesY = getOneShotResultsFor(scene, force).await()
         render(valuesX, valuesY)
     }
 
-    fun getOneShotResultsFor(scene: Scene, force: ForceWithParameters<PairwiseForce>): Deferred<FloatArray> {
+    fun getOneShotResultsFor(scene: Scene, force: ForceParameterBinding<PairwiseForce>): Deferred<FloatArray> {
         val resolution = 256
         val outputBuffer = StorageBuffer(GpuType.Float1, size = resolution)
         val shader = force.createPairwiseForceComputeShader().apply {

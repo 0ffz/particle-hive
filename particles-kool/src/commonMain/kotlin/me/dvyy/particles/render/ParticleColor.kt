@@ -5,8 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class ParticleColor {
-    TYPE, VELOCITY, FORCE, CLUSTER, NEIGHBOURS
+    TYPE, VELOCITY, FORCE, CLUSTER, EXPORTED_DATA
 }
+
 
 @Serializable
 enum class UiScale(val size: Sizes) {

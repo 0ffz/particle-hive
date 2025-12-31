@@ -2,14 +2,17 @@ package me.dvyy.particles
 
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.scene.Scene
-import de.fabmax.kool.util.FrontendScope
 import de.fabmax.kool.util.KoolDispatchers
+import de.fabmax.kool.util.SyncedScope
 import de.fabmax.kool.util.delayFrames
+import de.fabmax.kool.util.releaseDelayed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.dvyy.particles.compute.forces.Force
-import me.dvyy.particles.compute.forces.ForcesDefinition
+import me.dvyy.particles.compute.forces.ForceBindings
+import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.ConfigPath
@@ -23,20 +26,21 @@ class SceneManager(
     val ctx: KoolContext,
     /** Classes/data that persists across application reloads. */
     val baseModule: Module,
-    val forces: List<Force>,
+    val forces: List<Force<*>>,
+    val wallForce: PairwiseForce,
 ) {
     private var loadedScenes: List<Scene> = listOf()
     val mainScene get() = loadedScenes.first()
     val globalApplication = koinApplication { modules(baseModule) }
 
-    suspend fun reload() {
+    suspend fun reload() = withContext(KoolDispatchers.Synced) {
         unload()
         delayFrames(1)
         load()
     }
 
-    fun load() = FrontendScope.launch {
-        val sceneScope = CoroutineScope(KoolDispatchers.Frontend)
+    fun load() = SyncedScope.launch {
+        val sceneScope = CoroutineScope(KoolDispatchers.Synced)
         // Create dependencies with koin
         val application = koinApplication {
             modules(
@@ -46,7 +50,7 @@ class SceneManager(
                 },
                 baseModule,
                 module {
-                    single { ForcesDefinition(forces, get<ConfigRepository>().config.value) }
+                    single { ForceBindings(wallForce, forces, get<ConfigRepository>().config.value) }
                 },
                 dataModule(),
                 shadersModule(),
@@ -72,14 +76,14 @@ class SceneManager(
     }
 
     fun unload() {
-        loadedScenes.forEach {
-            ctx.removeScene(it)
-            it.release()
+        loadedScenes.forEach { scene ->
+            ctx.removeScene(scene)
+            scene.releaseDelayed(1)
         }
         loadedScenes = listOf()
     }
 
-    suspend fun open(file: FilePickerResult) {
+    suspend fun open(file: FilePickerResult) = withContext(KoolDispatchers.Synced) {
         val config = globalApplication.koin.get<ConfigRepository>()
         config.openFile(file)
         reload()

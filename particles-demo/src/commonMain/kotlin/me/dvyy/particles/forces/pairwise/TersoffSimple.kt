@@ -2,16 +2,42 @@ package me.dvyy.particles.forces.pairwise
 
 import de.fabmax.kool.math.PI_F
 import de.fabmax.kool.modules.ksl.lang.*
-import me.dvyy.particles.compute.forces.PairwiseForce
-import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
+import me.dvyy.particles.compute.forces.buildForce
 
-object TersoffSimple : PairwiseForce("tersoff_simple") {
-    val A = param<Float>("A")
-    val B = param<Float>("B")
-    val lambda1 = param<Float>("lambda1")
-    val lambda2 = param<Float>("lambda2")
-    val beta = param<Float>("beta")
-    val n = param<Float>("n")
+object TersoffSimple {
+    val force = buildForce("tersoff_simple") {
+        val A = paramFloat("A")
+        val B = paramFloat("B")
+        val lambda1 = paramFloat("lambda1")
+        val lambda2 = paramFloat("lambda2")
+        val beta = paramFloat("beta")
+        val n = paramFloat("n")
+
+        pairwise { distance, localCount ->
+            val A = A()
+            val B = B()
+            val lambda1 = lambda1()
+            val lambda2 = lambda2()
+            val beta = beta()
+            val n = n()
+
+            body {
+                // assuming: cutoff is just 1, b_ij is constant
+                val cutoff = float1Var(cutoff(distance, 0.2f.const, 3f.const), "cutoff")
+                val d_cutoff = float1Var(d_cutoff(distance, 0.2f.const, 3f.const), "dCutoff")
+                val repulsive = float1Var(force(A, lambda1, distance), "repulsive")
+                val attractive = float1Var(force(-B, lambda2, distance), "attractive")
+                val d_repulsive = float1Var(d_force(A, lambda1, distance), "dRepulsive")
+                val d_attractive = float1Var(d_force(-B, lambda2, distance), "dAttractive")
+                val b_ij = float1Var(b_ij(localCount, beta, n), "bIJ")
+                val `d(b_ij)` = float1Var(`d(b_ij)`(localCount, beta, n), "dBIJ")
+                val normalTerm = repulsive + b_ij * attractive
+                val derivativeTerm = d_repulsive + (`d(b_ij)` * attractive) + (b_ij * d_attractive)
+
+                return@body -(d_cutoff * normalTerm + cutoff * derivativeTerm)
+            }
+        }
+    }
 //    val cutoffR = param<Float>("cutoffStart")
 //    val cutoffD = param<Float>("cutoffEnd")
 
@@ -32,21 +58,22 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
 //    lambda_1 = ,
 //    lambda_2 = ,
 //    )
+
     fun KslScopeBuilder.cutoff(
-        distance: FloatParam,
-        cutoffD: FloatParam,
-        cutoffR: FloatParam,
-    ): FloatParam {
+        distance: KslExprFloat1,
+        cutoffD: KslExprFloat1,
+        cutoffR: KslExprFloat1,
+    ): KslExprFloat1 {
         // Clamp the distance to the transition range [lowerBound, upperBound].
         val clampedDistance = clamp(distance, cutoffR - cutoffD, cutoffR + cutoffD)
         return 0.5f.const - (0.5f.const * sin((PI_F / 2f).const * (clampedDistance - cutoffR) / cutoffD))
     }
 
     fun KslScopeBuilder.`d_cutoff`(
-        distance: FloatParam,
-        cutoffD: FloatParam,
-        cutoffR: FloatParam,
-    ): FloatParam {
+        distance: KslExprFloat1,
+        cutoffD: KslExprFloat1,
+        cutoffR: KslExprFloat1,
+    ): KslExprFloat1 {
         // Define the lower and upper bounds of the transition region.
         val lowerBound = cutoffR - cutoffD
         val upperBound = cutoffR + cutoffD
@@ -70,15 +97,15 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
     // We assume a_ij = 1, as suggested by Tersoff
 
     fun KslScopeBuilder.`b_ij`(
-        localCount: FloatParam,
-        beta: FloatParam,
-        n: FloatParam,
+        localCount: KslExprFloat1,
+        beta: KslExprFloat1,
+        n: KslExprFloat1,
     ) = pow(1f.const + pow(beta, n) * pow(localCount, n), ((-1f).const / (2f.const * n)))
 
     fun KslScopeBuilder.`d(b_ij)`(
-        localCount: FloatParam,
-        beta: FloatParam,
-        n: FloatParam,
+        localCount: KslExprFloat1,
+        beta: KslExprFloat1,
+        n: KslExprFloat1,
     ): KslExpressionMathScalar<KslFloat1> {
         val beta_n = float1Var(pow(beta, n), "betaN")
         return -(beta_n / 2f.const) * pow(
@@ -88,45 +115,14 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
     }
 
     fun KslScopeBuilder.force(
-        scalar: FloatParam,
-        lambda: FloatParam,
-        distance: FloatParam,
+        scalar: KslExprFloat1,
+        lambda: KslExprFloat1,
+        distance: KslExprFloat1,
     ) = scalar * exp(-lambda * distance)
 
     fun KslScopeBuilder.d_force(
-        scalar: FloatParam,
-        lambda: FloatParam,
-        distance: FloatParam,
+        scalar: KslExprFloat1,
+        lambda: KslExprFloat1,
+        distance: KslExprFloat1,
     ) = -(scalar * lambda) * exp(-lambda * distance)
-
-    // assuming: cutoff is just 1, b_ij is constant
-    override fun KslPairwiseFunction.createFunction() {
-        //TODO ability to derive shader params based on parts (to avoid wasting compute on repeated calculations)
-        val A = A.asShaderParam()
-        val B = B.asShaderParam()
-        val lambda1 = lambda1.asShaderParam()
-        val lambda2 = lambda2.asShaderParam()
-        val beta = beta.asShaderParam()
-        val n = n.asShaderParam()
-//        val cutoffR = cutoffR.asShaderParam()
-//        val cutoffD = cutoffD.asShaderParam()
-
-        body {
-            val cutoff = float1Var(cutoff(distance, 0.2f.const, 3f.const), "cutoff")
-            val d_cutoff = float1Var(d_cutoff(distance, 0.2f.const, 3f.const), "dCutoff")
-            val repulsive = float1Var(force(A, lambda1, distance), "repulsive")
-            val attractive = float1Var(force(-B, lambda2, distance), "attractive")
-            val d_repulsive = float1Var(d_force(A, lambda1, distance), "dRepulsive")
-            val d_attractive = float1Var(d_force(-B, lambda2, distance), "dAttractive")
-            val b_ij = float1Var(b_ij(localCount, beta, n), "bIJ")
-            val `d(b_ij)` = float1Var(`d(b_ij)`(localCount, beta, n), "dBIJ")
-            val normalTerm = repulsive + b_ij * attractive
-            val derivativeTerm = d_repulsive + (`d(b_ij)` * attractive) + (b_ij * d_attractive)
-
-            return@body -(d_cutoff * normalTerm + cutoff * derivativeTerm)
-        }
-    }
-
 }
-
-typealias FloatParam = KslScalarExpression<KslFloat1>

@@ -1,22 +1,36 @@
 package me.dvyy.particles.compute.forces
 
 import de.fabmax.kool.modules.ksl.lang.*
-import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
 import me.dvyy.particles.compute.helpers.KslInt
+
+data class IndividualForceFunction(
+    private val function: KslFunctionFloat3,
+) {
+    context(scope: KslScopeBuilder)
+    operator fun invoke(
+        position: KslExprFloat3,
+        parameters: ParametersArray<IndividualForce>,
+    ): KslExprFloat3 = with(scope) {
+        function.invoke(position, *parameters)
+    }
+}
+
+typealias IndividualForce = Force<IndividualForceFunction>
 
 /**
  * A force between two particles, given only distance as a parameter
  */
-abstract class PairwiseForce(name: String) : Force(name) {
-    abstract fun KslPairwiseFunction.createFunction()
-
-    context(stage: KslComputeStage)
-    override fun createFunction(): KslPairwiseFunction {
-        return KslPairwiseFunction(stage, name).apply { createFunction() }
+data class PairwiseForceFunction(
+    private val function: KslFunctionFloat1,
+) {
+    context(scope: KslScopeBuilder)
+    operator fun invoke(
+        distance: KslExprFloat1,
+        localCount: KslExprFloat1,
+        parameters: ParametersArray<PairwiseForce>,
+    ): KslExprFloat1 = with(scope) {
+        function.invoke(distance, localCount, *parameters)
     }
-
-    context(stage: KslComputeStage)
-    val kslReference get(): KslFunctionFloat1 = stage.functions[name] as KslFunctionFloat1
 
     companion object {
         /** Gets the hash for a pair of particle types (symmetrical), knowing the total particle type count. */
@@ -29,3 +43,4 @@ abstract class PairwiseForce(name: String) : Force(name) {
     }
 }
 
+typealias PairwiseForce = Force<PairwiseForceFunction>

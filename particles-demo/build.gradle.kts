@@ -17,6 +17,9 @@ kotlin {
         }
     }
     jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+    }
 
     js {
         browser {

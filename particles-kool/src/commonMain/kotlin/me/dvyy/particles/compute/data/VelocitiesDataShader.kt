@@ -25,6 +25,9 @@ class VelocitiesDataShader(
                 val velocity = float3Var(inputs[id].xyz)
                 val length = float1Var(length(velocity))
                 val bucket = (length / maxVelocity * numBuckets.toFloat1()).toInt1()
+                //FIXME on OpenGL, atomicAdd counts only as write, we need a manual read to actually set the buffer to read-write
+                // Report to kool-engine.
+                int1Var(buckets[bucket])
                 //FIXME int1Var is needed since atomicAdd doesn't get called otherwise.
                 // Report to kool-engine.
                 int1Var(buckets.atomicAdd(bucket, 1.const))

@@ -1,18 +1,16 @@
 package me.dvyy.particles.forces.individual
 
-import me.dvyy.particles.compute.forces.IndividualForce
-import me.dvyy.particles.compute.forces.builders.KslIndividualForceFunction
+import me.dvyy.particles.compute.forces.buildForce
 
 /**
  * A constant downwards force.
  */
-object ConstantForce : IndividualForce("gravity") {
-    val force = param<Float>("force")
+val ConstantForce = buildForce("gravity") {
+    val force = paramFloat("force")
 
-    override fun KslIndividualForceFunction.createFunction() {
-        val force = force.asShaderParam()
+    individual {
         body {
-            float3Value(0f.const, force, 0f.const)
+            float3Value(0f.const, force(), 0f.const)
         }
     }
 }
