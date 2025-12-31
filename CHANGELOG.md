@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project does not fully adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) while under heavy
 development.
 
+## [Unreleased]
+
+### Added
+
+- Confing option to select a type of data to export per-particle particle view buffer, as well as rescale it. This
+  replaces the local neighbours display option (see `examples/benchmark.yml`), current options include:
+  - Local neighbours
+  - (For debugging) Cell count, calculated by subtracting start index from end index
+
+### Changed
+
+- Updated to Kool 0.19.0, this update primarily cleans up struct definition syntax
+
 ## [0.4.1] - 2025-11-03
 
 ### Added
