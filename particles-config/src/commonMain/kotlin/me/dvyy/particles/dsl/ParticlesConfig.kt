@@ -1,5 +1,6 @@
 package me.dvyy.particles.dsl
 
+import com.mineinabyss.jsonschema.annotations.Description
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -10,10 +11,16 @@ internal typealias PairName = String
 
 @Serializable
 data class ParticlesConfig(
+    @Description("Parameters for the simulation.")
     val simulation: Simulation = Simulation(),
+    @Description("Parameters for the application frontend interface.")
     val application: ApplicationConfiguration = ApplicationConfiguration(),
+    @Description("Particle type definitions (a map of particle name to its definition)")
     @SerialName("particles")
     val nameToParticle: Map<String, Particle> = mapOf(),
+    @Description("""Particle interaction definitions (forces acting on particles).
+For individual forces, use the particle name as the key.
+For pairwise forces, use 'typeA-typeB' pairs as the key.""")
     val interactions: Map<InteractionName, Map<PairName, Parameters>> = mapOf(),
 ) {
     @Transient

@@ -1,0 +1,162 @@
+{
+    "$ref": "#/$defs/me.dvyy.particles.dsl.ParticlesConfig",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "me.dvyy.particles.dsl.ExportDataType": {
+            "enum": [
+                "LOCAL_NEIGHBOURS",
+                "CELL_PARTICLE_COUNT"
+            ]
+        },
+        "me.dvyy.particles.dsl.ParticlesConfig": {
+            "type": "object",
+            "properties": {
+                "simulation": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of particles to simulate, rounded to nearest multiple of 64"
+                        },
+                        "conversionRate": {
+                            "type": "integer",
+                            "description": "How often to run conversions in steps (if specified)"
+                        },
+                        "minGridSize": {
+                            "type": "number",
+                            "description": "Minimum size of grid cells, should be at least as big as the longest-range interaction possible between two particles"
+                        },
+                        "dT": {
+                            "type": "number",
+                            "description": "Time step size (larger steps update velocity and position of particles at larger increments)"
+                        },
+                        "maxVelocity": {
+                            "type": "number",
+                            "description": "Maximum length the velocity vector of a particle can have."
+                        },
+                        "maxForce": {
+                            "type": "number",
+                            "description": "Maximum length the force vector of a particle can have."
+                        },
+                        "targetVelocity": {
+                            "type": "number",
+                            "description": "Target velocity to aim for by nudging particle velocities slightly based on their median."
+                        },
+                        "targetVelocityStrength": {
+                            "type": "number",
+                            "description": "How strongly to nudge particles towards the target velocity."
+                        },
+                        "exportData": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "$ref": "#/$defs/me.dvyy.particles.dsl.ExportDataType",
+                                    "description": "The type of data to export per particle. This can be displayed by switching the 'Particle color' setting to exported data."
+                                },
+                                "rescale": {
+                                    "type": "number",
+                                    "description": "What to multiply the collected value by such that 0 is the minimum and 1 is the maximum visible value."
+                                }
+                            },
+                            "description": "Options for exporting calculated particle data for visualization (or in the future other types of collection)"
+                        },
+                        "threeDimensions": {
+                            "type": "boolean",
+                            "description": "Should the simulation run in 3D space?"
+                        },
+                        "passesPerFrame": {
+                            "type": "integer",
+                            "description": "How many iterations of the simulation to run per *rendered* frame.\nParticles are only re-sorted into cells after the last pass,\nthus higher numbers lose some accuracy as particles move to different cells."
+                        },
+                        "size": {
+                            "type": "object",
+                            "properties": {
+                                "width": {
+                                    "type": "integer"
+                                },
+                                "height": {
+                                    "type": "integer"
+                                },
+                                "depth": {
+                                    "type": "integer"
+                                }
+                            },
+                            "description": "Size of the simulation box, rounded to the nearest grid size."
+                        }
+                    },
+                    "description": "Parameters for the simulation."
+                },
+                "application": {
+                    "type": "object",
+                    "properties": {
+                        "fullscreen": {
+                            "type": "boolean"
+                        },
+                        "width": {
+                            "type": "integer"
+                        },
+                        "height": {
+                            "type": "integer"
+                        }
+                    },
+                    "description": "Parameters for the application frontend interface."
+                },
+                "particles": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "color": {
+                                "type": "string",
+                                "description": "The color of the particle as a hex code (ex. ff0000 for red)."
+                            },
+                            "radius": {
+                                "type": "number",
+                                "description": "The radius of the particle when displayed on screen. Does not affect the simulation itself."
+                            },
+                            "distribution": {
+                                "type": "number",
+                                "description": "When randomly assigning particle types, how much to assign these particles as a ratio relative to all others. (ex. if type A has distribution 1, and B has 2, B will be twice as common as A.)"
+                            },
+                            "convertTo": {
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "chance"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "The particle type to convert to."
+                                    },
+                                    "chance": {
+                                        "type": "number",
+                                        "description": "The chance any given particle of this type will be converted to the target type every [conversionRate] timesteps."
+                                    }
+                                },
+                                "description": "Options for converting this particle type to another during runtime. Useful for slowly introducing new particles."
+                            }
+                        }
+                    },
+                    "description": "Particle type definitions (a map of particle name to its definition)"
+                },
+                "interactions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "number"
+                            }
+                        }
+                    },
+                    "description": "Particle interaction definitions (forces acting on particles).\nFor individual forces, use the particle name as the key.\nFor pairwise forces, use 'typeA-typeB' pairs as the key."
+                },
+                "particleTypeCount": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

@@ -4,5 +4,6 @@ include(
     "particles-config",
     "particles-kool",
     "particles-ui",
-    "particles-demo"
+    "particles-demo",
+    "particles-schema",
 )

@@ -8,12 +8,13 @@ plugins {
 }
 
 kotlin {
-    jvm()
-    jvmToolchain(21)
-
     compilerOptions {
-        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.add("-Xcontext-parameters")
     }
+    jvm {
+    }
+    jvmToolchain(21)
 
     js {
         binaries.executable()
@@ -36,27 +37,23 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("com.mineinabyss.jsonschema-kt:annotations:0.1.1")
-                implementation(libs.kaml)
+                implementation(project(":particles-kool"))
+                implementation(libs.kotlinx.serialization.json)
+                implementation("com.mineinabyss.jsonschema-kt:dsl:0.1.1")
+                implementation("com.mineinabyss.jsonschema-kt:generator-kotlinx-serialization:0.1.1")
             }
         }
     }
 }
 
 
-//publishing {
-//    publications {
-//        create<MavenPublication>("maven") {
-//            groupId = "me.dvyy"
-//            artifactId = "particles-dsl"
-//            from(components["java"])
-//        }
-//    }
-//    repositories {
-//        maven {
-//            name = "mineinabyss"
-//            url = uri("https://repo.mineinabyss.com/snapshots/")
-//            credentials(PasswordCredentials::class)
-//        }
-//    }
-//}
+tasks {
+    val generateConfigSchema by registering(JavaExec::class) {
+        classpath = sourceSets["jvmMain"].runtimeClasspath
+        val outputFile = rootProject.file("examples/schema.json")
+        args(outputFile.absolutePath)
+        mainClass.set("me.dvyy.particles.schema.SchemaGeneratorKt")
+        inputs.dir(rootProject.file("particles-config/src"))
+        outputs.file(outputFile)
+    }
+}
