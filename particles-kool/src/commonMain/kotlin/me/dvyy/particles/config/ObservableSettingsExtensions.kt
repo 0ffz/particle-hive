@@ -2,6 +2,7 @@ package me.dvyy.particles.config
 
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.SettingsListener
+import de.fabmax.kool.util.logW
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -44,7 +45,9 @@ inline fun <reified T> ObservableSettings.getFlow(
     defaultValue,
     scope,
     getter = { key, defaultValue ->
-        YamlHelpers.yaml.decodeFromString(serializer, getStringOrNull(key) ?: return@getFlow defaultValue)
+        runCatching {
+            YamlHelpers.yaml.decodeFromString(serializer, getStringOrNull(key) ?: return@getFlow defaultValue)
+        }.onFailure { logW { "Failed to decode stored value, returning default: ${it.message}" } }.getOrDefault(defaultValue)
     },
     setter = { key, newValue -> putString(key, YamlHelpers.yaml.encodeToString(serializer, newValue)) },
     addListener = { key, defaultValue, callback ->

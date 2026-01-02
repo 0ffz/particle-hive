@@ -61,6 +61,7 @@ kotlin {
                 implementation(libs.multiplatform.settings.serialization)
                 implementation(libs.filekit.core)
                 implementation(libs.filekit.dialogs)
+                implementation(libs.kotlinx.collections.immutable)
             }
         }
 

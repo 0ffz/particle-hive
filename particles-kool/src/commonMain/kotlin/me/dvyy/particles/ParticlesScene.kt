@@ -41,7 +41,8 @@ class ParticlesScene(
     val settings: AppSettings,
     val viewModel: ParticlesViewModel,
 ) {
-    val config = configRepo.config.value
+    private val config = configRepo.config.value
+    private val shaders = config.debug.shaders
 
     val scene = scene {
         buffers.releaseWith(this)
@@ -50,9 +51,9 @@ class ParticlesScene(
         val computePass = ComputePass("Particles Compute")
         //FIXME placing this lower seems to set velocity to zero at the start. Is any kind of velocity read at certain times causing it to zero out?
         // (may be related to Vulkan data init issues observed in tests)
-        computePass.addTask(particlesMesh.colorShader, configRepo.numGroups) // Recolor particles
-        resetBuffers.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
-        gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
+        if (shaders.particleMesh) computePass.addTask(particlesMesh.colorShader, configRepo.numGroups) // Recolor particles
+        if (shaders.resetBuffers) resetBuffers.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
+        if (shaders.sort) gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
 
         // Web has a limit of 8 storage buffers per shader stage, accommodate this by running multiple reorder shaders
         val buffersToReorder = listOf(
@@ -68,7 +69,7 @@ class ParticlesScene(
             Platform.Javascript -> buffersToReorder.chunked(3)
             else -> listOf(buffersToReorder)
         }
-        chunked.forEach {
+        if (shaders.reorderBuffers) chunked.forEach {
             ReorderBuffersShader(it).addTo(
                 stage = computePass,
                 indices = buffers.sortIndices,
@@ -77,22 +78,25 @@ class ParticlesScene(
             )
         }
 
-        offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)
-        val fieldsPasses = fieldsShader.addTo(
+        if (shaders.calculateOffsets) offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)
+
+        // Run force computations based on particle interactions
+        val fieldsPasses = if (shaders.fields) fieldsShader.addTo(
             computePass,
             meanSquareDataShader
-        ) // Run force computations based on particle interactions
-        convertShader.addTo(computePass) // Convert particles to different types as needed
+        ) else listOf()
+
+        if (shaders.convert) convertShader.addTo(computePass) // Convert particles to different types as needed
 
         // == DATA COLLECTION ==
-        velocitiesDataShader.addTo(computePass)
-        meanSquareDataShader.addTo(computePass)
+        if (shaders.velocityData) velocitiesDataShader.addTo(computePass)
+        if (shaders.meanSquareData) meanSquareDataShader.addTo(computePass)
 
         addComputePass(computePass)
 
         // === RENDERING ===
         cameraManager.manageCameraFor(this)
-        addNode(particlesMesh.mesh) // Render particles as instanced mesh
+        if (shaders.particleMesh) addNode(particlesMesh.mesh) // Render particles as instanced mesh
 
         // === DEBUGGING ===
         var iterations = 0
@@ -118,8 +122,10 @@ class ParticlesScene(
                 }
             }
         }
-        fieldsPasses.forEach { (halfStep, fullStep) -> halfStep.isEnabled = true; fullStep.isEnabled = true }
+        fieldsPasses.forEach { (halfStep, fullStep) -> halfStep.isEnabled = false; fullStep.isEnabled = false }
+//        fieldsPasses.forEach { (halfStep, fullStep) -> halfStep.isEnabled = true; fullStep.isEnabled = true }
         onUpdate { (_, ctx) ->
+            return@onUpdate
             val targetFps = settings.ui.targetFPS.value
             if (!settings.ui.shouldCalibrateFPS.value) {
                 return@onUpdate

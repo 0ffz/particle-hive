@@ -7,6 +7,9 @@ import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.MdColor
 import de.fabmax.kool.util.MsdfFont
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -32,7 +35,7 @@ class TextEditorWindow(
     val yamlValue = consoleFontAsState.map { TextAttributes(it, Color.WHITE) }
     val yamlTag = consoleFontAsState.map { TextAttributes(it, Color.LIGHT_YELLOW) }
     val yamlComment = consoleFontAsState.map { TextAttributes(it, Color.DARK_GRAY) }
-    private val lines = MutableStateFlow(listOf<String>())
+    private val lines = MutableStateFlow(persistentListOf<String>())
     val textChanged = mutableStateOf(false)
     val decodedConfig = lines.debounce(0.75.seconds).map {
         decodeConfigFromText(it)
@@ -70,7 +73,7 @@ class TextEditorWindow(
     init {
         scope.launch {
             configRepository.configLines.collect { lines ->
-                this@TextEditorWindow.lines.update { lines.lines() }
+                this@TextEditorWindow.lines.update { lines.lines().toPersistentList() }
             }
         }
         scope.launch {
@@ -162,32 +165,35 @@ class TextEditorWindow(
                             replacement: String,
                             textAreaScope: TextAreaScope,
                         ): Vec2i {
-                            val edited = lines.value.toMutableList()
                             val replaceLines = replacement.lines()
                             val caretPos = Vec2i(
                                 if (replaceLines.size > 1) replaceLines.last().length else selectionStartChar + replaceLines.last().length,
                                 selectionStartLine + replaceLines.lastIndex
                             )
-                            if (edited.isEmpty()) {
-                                edited.add(replacement)
-                            } else {
-                                val start = edited[selectionStartLine].take(selectionStartChar)
-                                val end = edited[selectionEndLine].drop(selectionEndChar)
-                                (selectionStartLine..selectionEndLine).forEach {
-                                    edited.removeAt(selectionStartLine)
-                                }
-                                replaceLines.forEachIndexed { i, line ->
-                                    edited.add(
-                                        selectionStartLine + i,
-                                        buildString {
-                                            if (i == 0) append(start)
-                                            append(line)
-                                            if (i == replaceLines.lastIndex) append(end)
+                            lines.update {
+                                it.mutate { edited ->
+                                    if (edited.isEmpty()) {
+                                        edited.add(replacement)
+                                    } else {
+                                        val start = edited[selectionStartLine].take(selectionStartChar)
+                                        val end = edited[selectionEndLine].drop(selectionEndChar)
+                                        (selectionStartLine..selectionEndLine).forEach {
+                                            edited.removeAt(selectionStartLine)
                                         }
-                                    )
+                                        replaceLines.forEachIndexed { i, line ->
+                                            edited.add(
+                                                selectionStartLine + i,
+                                                buildString {
+                                                    if (i == 0) append(start)
+                                                    append(line)
+                                                    if (i == replaceLines.lastIndex) append(end)
+                                                }
+                                            )
+                                        }
+                                    }
+
                                 }
                             }
-                            lines.update { edited }
                             textChanged.set(true)
                             return caretPos
                         }

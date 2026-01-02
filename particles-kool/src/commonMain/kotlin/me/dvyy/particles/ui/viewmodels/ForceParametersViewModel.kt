@@ -1,8 +1,10 @@
 package me.dvyy.particles.ui.viewmodels
 
-import de.fabmax.kool.util.launchOnMainThread
+import de.fabmax.kool.util.FrontendScope
+import de.fabmax.kool.util.logD
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.forces.ForceBindings
 import me.dvyy.particles.compute.forces.ForceParameterBinding
@@ -31,7 +33,7 @@ class ForceParametersViewModel(
     val graph = GraphNode("force")
     val parameters = combine(forcesDefinition.forces.map { force ->
         force.changes.map {
-            println("Changes made to $force!")
+            logD { "Changes made to force ${force.force.name}" }
             ForceUiState(
                 name = force.force.name,
                 interactions = force.getAll().map { (set, values) ->
@@ -52,7 +54,7 @@ class ForceParametersViewModel(
     }) { it }
 
     init {
-        launchOnMainThread {
+        FrontendScope.launch {
             parameters.collect {
                 //TODO enable
 //                drawGraphFor(it.first().name)
@@ -74,7 +76,7 @@ class ForceParametersViewModel(
     fun drawGraphFor(force: String) {
         val scene = sceneManager.mainScene
         val force = forcesDefinition.forces.find { it.force.name == force } as ForceParameterBinding<PairwiseForce>
-        launchOnMainThread {
+        FrontendScope.launch {
             graph.renderGpuFunction(scene, force)
         }
     }

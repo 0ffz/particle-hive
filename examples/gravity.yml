@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=schema.json
 simulation:
   count: 20000
   minGridSize: 3.0

@@ -4,6 +4,7 @@ import com.mineinabyss.jsonschema.annotations.Description
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import me.dvyy.particles.dsl.debug.DebugOptions
 
 internal typealias Parameters = Map<String, Float>
 internal typealias InteractionName = String
@@ -22,6 +23,7 @@ data class ParticlesConfig(
 For individual forces, use the particle name as the key.
 For pairwise forces, use 'typeA-typeB' pairs as the key.""")
     val interactions: Map<InteractionName, Map<PairName, Parameters>> = mapOf(),
+    val debug: DebugOptions = DebugOptions(),
 ) {
     @Transient
     val particles = nameToParticle.values.toList()
@@ -37,15 +39,5 @@ For pairwise forces, use 'typeA-typeB' pairs as the key.""")
     fun particle(name: String): ParticleId = particleIds[name] ?: error("Particle with name $name not found")
 
     fun particleName(id: ParticleId) = particleIds.entries.firstOrNull { it.value == id }?.key ?: error("Particle with id $id not found")
-//    @Transient
-//    val pairwiseInteractions: Map<InteractionName, Map<ParticlePair, Parameters>> = interactions.mapNotNull { (name, interactions) ->
-//        val pair = ParticlePair.fromString(name, particleIds) ?: return@mapNotNull null
-//        pair to interactions
-//    }.toMap()
-//
-//    @Transient
-//    val individualInteractions: Map<ParticleId, Map<PairName, Parameters>> = interactions.mapNotNull { (name, interactions) ->
-//        val individual = particleIds[name] ?: return@mapNotNull null
-//        individual to interactions
-//    }.toMap()
 }
+

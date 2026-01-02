@@ -153,6 +153,48 @@
                     },
                     "description": "Particle interaction definitions (forces acting on particles).\nFor individual forces, use the particle name as the key.\nFor pairwise forces, use 'typeA-typeB' pairs as the key."
                 },
+              "debug": {
+                "type": "object",
+                "properties": {
+                  "logLevel": {
+                    "type": "string",
+                    "description": "Set log level (currently not implemented)"
+                  },
+                  "shaders": {
+                    "type": "object",
+                    "properties": {
+                      "particleMesh": {
+                        "type": "boolean"
+                      },
+                      "resetBuffers": {
+                        "type": "boolean"
+                      },
+                      "sort": {
+                        "type": "boolean"
+                      },
+                      "reorderBuffers": {
+                        "type": "boolean"
+                      },
+                      "calculateOffsets": {
+                        "type": "boolean"
+                      },
+                      "fields": {
+                        "type": "boolean"
+                      },
+                      "convert": {
+                        "type": "boolean"
+                      },
+                      "velocityData": {
+                        "type": "boolean"
+                      },
+                      "meanSquareData": {
+                        "type": "boolean"
+                      }
+                    },
+                    "description": "Enable or disable shaders in the pipeline."
+                  }
+                }
+              },
                 "particleTypeCount": {
                     "type": "integer"
                 }

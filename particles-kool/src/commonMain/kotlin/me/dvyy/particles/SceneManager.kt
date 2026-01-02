@@ -5,7 +5,6 @@ import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.util.KoolDispatchers
 import de.fabmax.kool.util.SyncedScope
 import de.fabmax.kool.util.delayFrames
-import de.fabmax.kool.util.releaseDelayed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -35,7 +34,6 @@ class SceneManager(
 
     suspend fun reload() = withContext(KoolDispatchers.Synced) {
         unload()
-        delayFrames(1)
         load()
     }
 
@@ -75,12 +73,16 @@ class SceneManager(
         loadedScenes = listOf(scene, ui)
     }
 
-    fun unload() {
+    suspend fun unload() = withContext(KoolDispatchers.Synced) {
         loadedScenes.forEach { scene ->
             ctx.removeScene(scene)
-            scene.releaseDelayed(1)
+        }
+        delayFrames(1)
+        loadedScenes.forEach { scene ->
+            scene.release()
         }
         loadedScenes = listOf()
+        delayFrames(1)
     }
 
     suspend fun open(file: FilePickerResult) = withContext(KoolDispatchers.Synced) {
