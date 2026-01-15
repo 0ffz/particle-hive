@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     jvm()
-    jvmToolchain(21)
+    jvmToolchain(24)
 
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")

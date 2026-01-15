@@ -5,6 +5,7 @@ import me.dvyy.particles.forces.pairwise.LennardJones
 import me.dvyy.particles.forces.pairwise.Morse
 import me.dvyy.particles.forces.pairwise.TersoffSimple
 import me.dvyy.particles.launchParticles
+import me.dvyy.particles.ui.uiModule
 
 fun main(args: Array<String>) {
     launchParticles(
@@ -15,6 +16,7 @@ fun main(args: Array<String>) {
             ConstantForce
         ),
         wallForce = LennardJones,
-        args = args
+        args = args,
+        uiModule = { uiModule() }
     )
 }

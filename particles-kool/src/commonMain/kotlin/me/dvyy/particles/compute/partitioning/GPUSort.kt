@@ -132,12 +132,13 @@ class GPUSort {
                     val groupWidth = 1 shl (stageIndex - stepIndex)
                     val groupHeight = 2 * groupWidth - 1
                     addTask(sorter, numGroups = Vec3i(numPairs / WORK_GROUP_SIZE, 1, 1)).apply {
-                        pipeline.swapPipelineData("$stageIndex, $stepIndex")
+                        val pipelineId = "$stageIndex, $stepIndex"
+                        pipeline.swapPipelineData(pipelineId)
                         groupWidthU = groupWidth
                         groupHeightU = groupHeight
                         stepIndexU = stepIndex
                         onBeforeDispatch {
-                            pipeline.swapPipelineData("$stageIndex, $stepIndex")
+                            pipeline.swapPipelineData(pipelineId)
                             pipeline.captureBuffer()
                         }
                     }

@@ -16,7 +16,7 @@ kotlin {
             mainClass = "me.dvyy.particles.forces.MainKt"
         }
     }
-    jvmToolchain(21)
+    jvmToolchain(24)
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
     }
@@ -42,6 +42,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":particles-kool"))
+                implementation(project(":particles-ui"))
             }
         }
     }

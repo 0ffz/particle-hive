@@ -5,15 +5,21 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.jetbrainsCompose)
 }
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.addAll(
+            "-Xexpect-actual-classes",
+            "-Xcontext-parameters",
+            "-Xcontext-sensitive-resolution"
+        )
     }
     jvm {
     }
-    jvmToolchain(21)
+    jvmToolchain(24)
 
     js {
         binaries.executable()
@@ -37,6 +43,13 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":particles-kool"))
+                implementation(libs.kool.compose.ui)
+                implementation(libs.filekit.core)
+                implementation(libs.filekit.dialogs)
+                implementation(libs.multiplatform.settings)
+                implementation(libs.multiplatform.settings.make.observable)
+                implementation(libs.multiplatform.settings.coroutines)
+                implementation(libs.multiplatform.settings.serialization)
             }
         }
     }

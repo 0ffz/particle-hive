@@ -19,7 +19,7 @@ kotlin {
             useJUnitPlatform()
         }
     }
-    jvmToolchain(21)
+    jvmToolchain(24)
 
     js {
         binaries.executable()

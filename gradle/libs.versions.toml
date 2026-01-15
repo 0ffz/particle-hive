@@ -1,6 +1,7 @@
 [versions]
+compose = "1.9.3"
 kotlin = "2.3.0"
-kool = "0.19.0"
+kool = "0.20.0-SNAPSHOT"
 lwjgl = "3.3.5"
 coroutines = "1.8.0"
 kaml = "0.67.0"
@@ -19,6 +20,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Kool
 kool-core = { group = "de.fabmax.kool", name = "kool-core", version.ref = "kool" }
+kool-compose-ui = { group = "de.fabmax.kool", name = "kool-compose-ui", version.ref = "kool" }
 
 # KAML
 kaml = { group = "com.charleskorn.kaml", name = "kaml", version.ref = "kaml" }
@@ -40,3 +42,6 @@ kotlin-powerassert = { id = "org.jetbrains.kotlin.plugin.power-assert", version.
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta13" }
 graalvm-nativeimage = "org.graalvm.buildtools.native:0.10.3"
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose" }
+

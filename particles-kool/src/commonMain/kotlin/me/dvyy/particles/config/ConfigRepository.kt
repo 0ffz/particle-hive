@@ -34,6 +34,8 @@ class ConfigRepository(
     val configLines = _configLines.asStateFlow()
     val currentFile = _currentFile.asStateFlow()
 
+    val passesPerFrame = MutableStateFlow(config.value.simulation.passesPerFrame)
+
     var isDirty: Boolean = true
 
     val count
