@@ -3,21 +3,20 @@ package me.dvyy.particles.ui.windows
 import com.charleskorn.kaml.YamlNode
 import de.fabmax.kool.KoolSystem
 import de.fabmax.kool.Platform
-import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.FrontendScope
 import de.fabmax.kool.util.Int32Buffer
+import de.fabmax.kool.util.KoolDispatchers
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
@@ -31,7 +30,6 @@ import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.*
 import me.dvyy.particles.ui.graphing.GraphNode
 import me.dvyy.particles.ui.graphing.GraphStyle
-import me.dvyy.particles.ui.helpers.UiConfigurable
 
 class ParticlesViewModel(
     private val buffers: ParticleBuffers,
@@ -44,30 +42,6 @@ class ParticlesViewModel(
     private val velocitiesData: VelocitiesDataShader,
     private val meanSquareData: MeanSquareVelocities,
 ) {
-    val passesPerFrame = MutableStateFlow(1)
-    val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
-        .distinctUntilChanged()
-        .map { state ->
-            listOf(
-                UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
-                    updateState { copy(dT = it.toDouble()) }
-                },
-                UiConfigurable.Slider("Target Velocity^2", state.targetVelocity, 0f, 100f) {
-                    updateState { copy(targetVelocity = it.toDouble()) }
-                },
-                UiConfigurable.Slider("Targetting Strength", state.targetVelocityStrength, 0f, 100f) {
-                    updateState { copy(targetVelocityStrength = it.toDouble()) }
-                },
-                UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {
-                    updateState { copy(maxVelocity = it.toDouble()) }
-                },
-                UiConfigurable.Slider("Max Force", state.maxForce, 0f, 100_000f) {
-                    updateState { copy(maxForce = it.toDouble()) }
-                },
-            )
-        }
-        .asMutableState(mutableStateScope, default = listOf())
-
     val plotTexture = Texture2d(
         mipMapping = MipMapping.Off,
         samplerSettings = SamplerSettings().nearest(),
@@ -96,7 +70,7 @@ class ParticlesViewModel(
 
     val meanSquareVelocity = MutableStateFlow(0f)
 
-    suspend fun updateVelocityHistogram() {
+    suspend fun updateVelocityHistogram() = withContext(KoolDispatchers.Backend) {
         val buckets = Int32Buffer(velocitiesData.numBuckets)
         velocitiesData.buckets.downloadData(buckets)
         val bucketsArray = buckets.toArray()
@@ -106,7 +80,7 @@ class ParticlesViewModel(
         )
     }
 
-    suspend fun readbackMeanSquareVelocity() {
+    suspend fun readbackMeanSquareVelocity() = withContext(KoolDispatchers.Synced) {
         val result = Float32Buffer(1)
         meanSquareData.output.downloadData(result)
         val msqV = result[0] / buffers.count

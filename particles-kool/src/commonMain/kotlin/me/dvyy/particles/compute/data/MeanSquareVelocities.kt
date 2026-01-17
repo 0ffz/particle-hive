@@ -25,7 +25,7 @@ class MeanSquareVelocities(
         }
     }
 
-    private val reduce = KslComputeShader("MeanSquareVelocities_reduce") {
+    fun reduceShader(id: Int) = KslComputeShader("MeanSquareVelocities_reduce_$id") {
         computeStage(WORK_GROUP_SIZE) {
             val inputs = storage<KslFloat1>("inputs")
             val outputs = storage<KslFloat1>("outputs")
@@ -55,10 +55,6 @@ class MeanSquareVelocities(
         }
     }
 
-    private var inputs by reduce.storage("inputs")
-    private var outputs by reduce.storage("outputs")
-    private var total by reduce.uniform1i("total")
-
     private val inputBuffer = Buffers.floats(buffers.count)
     private val outputBuffer = Buffers.floats(buffers.count)
     val output = Buffers.floats(1)
@@ -76,6 +72,10 @@ class MeanSquareVelocities(
                 storage("squareVelocities", inputBuffer)
             }, numGroups = buffers.configRepo.numGroups)
             repeat(iterations) { iteration ->
+                val reduce = reduceShader(iteration)
+                var inputs by reduce.storage("inputs")
+                var outputs by reduce.storage("outputs")
+                var total by reduce.uniform1i("total")
                 addTask(
                     reduce,
                     numGroups = Vec3i(((roundedUp shr iteration) + WORK_GROUP_SIZE - 1) / WORK_GROUP_SIZE, 1, 1)
@@ -86,6 +86,7 @@ class MeanSquareVelocities(
                     total = buffers.count shr iteration
                     onBeforeDispatch {
                         pipeline.swapPipelineData("iteration $iteration")
+                        pipeline.captureBuffer()
                     }
                 }
             }

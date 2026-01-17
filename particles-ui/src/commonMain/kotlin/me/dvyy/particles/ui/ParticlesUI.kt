@@ -46,9 +46,9 @@ class ParticlesUI(
             CompositionLocalProvider(LocalSizes provides scale.size) {
                 Sidebar(
                     listOf(
-                        WindowUiState("Project Chooser", Icons.folder) { ProjectSwitcherWindow() },
-                        WindowUiState("Editor", Icons.fileCode) { TextEditorWindow() },
                         WindowUiState("Live Parameters", Icons.slidersHorizontal) { LiveParametersWindow() },
+                        WindowUiState("Editor", Icons.fileCode) { TextEditorWindow() },
+                        WindowUiState("Project Chooser", Icons.folder) { ProjectSwitcherWindow() },
                     ),
                     rightAligned = false
                 )

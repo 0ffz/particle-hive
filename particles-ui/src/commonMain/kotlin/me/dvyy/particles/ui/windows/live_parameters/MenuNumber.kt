@@ -6,12 +6,14 @@ import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
 import de.fabmax.kool.modules.compose.composables.rendering.Text
 import de.fabmax.kool.modules.compose.composables.toolkit.Checkbox
+import de.fabmax.kool.modules.compose.composables.toolkit.DropdownButton
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenu
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenuItem
-import de.fabmax.kool.modules.compose.modifiers.*
+import de.fabmax.kool.modules.compose.modifiers.alignY
+import de.fabmax.kool.modules.compose.modifiers.backgroundColor
+import de.fabmax.kool.modules.compose.modifiers.fillMaxWidth
+import de.fabmax.kool.modules.compose.modifiers.padding
 import de.fabmax.kool.modules.ui2.AlignmentY
-import de.fabmax.kool.modules.ui2.RoundRectBackground
-import de.fabmax.kool.modules.ui2.RoundRectBorder
 import de.fabmax.kool.modules.ui2.dp
 import me.dvyy.compose.mini.modifier.Modifier
 
@@ -59,13 +61,16 @@ inline fun <reified T : Enum<T>> MenuEnum(
         val colors = LocalColors.current
         // TODO combobox component in kool
         Column {
-            Text(
-                value.name.lowercase().capitalize(), Modifier
-                    .background(RoundRectBackground(colors.backgroundVariant, 4.dp))
-                    .border(RoundRectBorder(colors.primaryVariant, 4.dp, 1.dp))
-                    .padding(horizontal = 6.dp, vertical = 4.dp)
-                    .clickable { expanded = !expanded }
-            )
+//            Text(
+//                value.name.lowercase().capitalize(), Modifier
+//                    .background(RoundRectBackground(colors.backgroundVariant, 4.dp))
+//                    .border(RoundRectBorder(colors.primaryVariant, 4.dp, 1.dp))
+//                    .padding(horizontal = 6.dp, vertical = 4.dp)
+//                    .clickable { expanded = !expanded }
+//            )
+            DropdownButton(onClick = { expanded = !expanded }) {
+                Text(value.name.lowercase().capitalize())
+            }
 
             DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
                 enumValues<T>().forEach { enumValue ->

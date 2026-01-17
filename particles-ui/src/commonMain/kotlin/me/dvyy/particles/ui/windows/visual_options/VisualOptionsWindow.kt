@@ -23,21 +23,23 @@ fun VisualOptionsWindow(
     ) {
         val shouldCalibrate by settings.ui.shouldCalibrateFPS.collectAsState()
         val targetFps by settings.ui.targetFPS.collectAsState()
-        MenuNumber(
-            "Target FPS",
-            targetFps,
-            onValueChange = { new -> settings.ui.targetFPS.update { new.toInt() } }
-        )
         MenuCheckbox(
             "Enabled",
             shouldCalibrate,
             onValueChange = { new -> settings.ui.shouldCalibrateFPS.update { new } }
         )
+        MenuNumber(
+            "Target FPS",
+            targetFps,
+            onValueChange = { new -> settings.ui.targetFPS.update { new.toInt() } }
+        )
     }
     Category("UI") {
         val scale by settings.ui.scale.collectAsState()
         val particleColoring by settings.ui.coloring.collectAsState()
+        val showGrid by settings.ui.showGrid.collectAsState()
         MenuEnum<UiScale>("Scale", scale, onValueChange = { new -> settings.ui.scale.update { new } })
         MenuEnum<ParticleColor>("Particle color", particleColoring, onValueChange = { new -> settings.ui.coloring.update { new } })
+        MenuCheckbox("Show grid", showGrid, onValueChange = { new -> settings.ui.showGrid.update { new } })
     }
 }

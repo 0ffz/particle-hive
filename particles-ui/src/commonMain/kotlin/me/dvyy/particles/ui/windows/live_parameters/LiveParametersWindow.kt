@@ -30,9 +30,14 @@ fun LiveParametersWindow(
 ) {
     Category("Simulation") {
         val simulation by configViewModel.simulation.collectAsState()
-        Text(simulation.dT.toString())
         MenuNumber("dT", simulation.dT.toFloat(), onValueChange = {
             configViewModel.updateSimulation { copy(dT = it.toDouble()) }
+        })
+        MenuNumber("Target Velocity^2", simulation.targetVelocity.toFloat(), onValueChange = {
+            configViewModel.updateSimulation { copy(targetVelocity = it.toDouble()) }
+        })
+        MenuNumber("Targetting Strength", simulation.targetVelocityStrength.toFloat(), onValueChange = {
+            configViewModel.updateSimulation { copy(targetVelocityStrength = it.toDouble()) }
         })
         MenuNumber("Max Velocity", simulation.maxVelocity.toFloat(), onValueChange = {
             configViewModel.updateSimulation { copy(maxVelocity = it.toDouble()) }
