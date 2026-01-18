@@ -1,6 +1,7 @@
 package me.dvyy.particles.ui.sidebar
 
 import androidx.compose.runtime.*
+import de.fabmax.kool.modules.compose.LocalColors
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
 import de.fabmax.kool.modules.compose.modifiers.*
@@ -9,7 +10,6 @@ import de.fabmax.kool.modules.ui2.ReverseRowLayout
 import de.fabmax.kool.modules.ui2.RowLayout
 import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.pipeline.Texture2d
-import de.fabmax.kool.util.Color
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.ui.sidebar.AppSizes.sidebarSize
 import me.dvyy.particles.ui.windows.Window
@@ -46,7 +46,7 @@ fun Sidebar(
             Modifier
                 .fillMaxHeight()
                 .width(sidebarSize)
-                .backgroundColor(Color.BLACK.withAlpha(0.7f))
+                .backgroundColor(LocalColors.current.background)
         ) {
             tabs.forEachIndexed { i, window ->
                 SidebarIcon(onClick = {

@@ -33,7 +33,7 @@ fun Window(
 ) = Box(Modifier.fillMaxHeight()) {
 
     // Content
-    ScrollArea(Modifier.fillMaxHeight()) {
+    ScrollArea(Modifier.fillMaxHeight(), scrollPaneModifier = Modifier.fillMaxHeight()) {
         Column(
             Modifier
                 .backgroundColor(LocalColors.current.background)
