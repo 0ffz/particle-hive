@@ -14,7 +14,7 @@ kotlin {
     }
     jvm {
     }
-    jvmToolchain(24)
+    jvmToolchain(25)
 
     js {
         binaries.executable()

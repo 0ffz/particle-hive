@@ -10,8 +10,11 @@ import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
 import de.fabmax.kool.modules.compose.composables.rendering.Text
 import de.fabmax.kool.modules.compose.composables.toolkit.Button
-import de.fabmax.kool.modules.compose.modifiers.*
-import de.fabmax.kool.modules.ui2.ReverseColumnLayout
+import de.fabmax.kool.modules.compose.helpers.toCompose
+import me.dvyy.compose.mini.layout.modifiers.fillMaxHeight
+import me.dvyy.compose.mini.layout.modifiers.fillMaxSize
+import me.dvyy.compose.mini.layout.modifiers.fillMaxWidth
+import me.dvyy.compose.mini.layout.modifiers.padding
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.YamlHelpers
@@ -37,9 +40,9 @@ fun TextEditorWindow(
 //    val decodedConfig = configRepo.configLines.debounce(0.75.seconds).map {
 //        decodeConfigFromText(it)
 //    }//.asMutableState(scope, default = Result.success(ParticlesConfig()))
-    Column(Modifier.layout(ReverseColumnLayout).fillMaxSize()) {
+    Column(Modifier.padding(sizes.gap.toCompose())/*.layout(ReverseColumnLayout)*/.fillMaxSize()) {
 //        val color = if (config.isSuccess) colors.backgroundVariant else (MdColor.RED tone 500).withAlpha(0.1f)
-        Row(Modifier.fillMaxWidth().margin(sizes.gap)) {
+        Row(Modifier.fillMaxWidth()) {
 //            val config = decodedConfig.use()
 //            config.onSuccess {
             Button(onClick = {
@@ -55,7 +58,7 @@ fun TextEditorWindow(
                 Text("Reload")
             }
             if (KoolSystem.platform == Platform.Javascript) {
-                Button(onClick = { viewModel.saveConfigAs() }, Modifier.margin(sizes.gap)) {
+                Button(onClick = { viewModel.saveConfigAs() }) {
                     Text("Save as")
                 }
             }

@@ -3,15 +3,14 @@ package me.dvyy.particles.ui.composables
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.modules.compose.LocalUiSurface
 import de.fabmax.kool.modules.compose.composables.layout.Box
-import de.fabmax.kool.modules.compose.modifiers.background
-import de.fabmax.kool.modules.compose.modifiers.fillMaxWidth
-import de.fabmax.kool.modules.compose.modifiers.height
-import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.util.KoolDispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import me.dvyy.compose.mini.layout.modifiers.fillMaxWidth
+import me.dvyy.compose.mini.layout.modifiers.height
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.ui.graphing.GraphNode
 import kotlin.time.Duration
@@ -33,9 +32,10 @@ fun Graph(
             while (true) {
                 gatherData(graph)
                 delay(refreshRate)
-                surface.triggerUpdate()
+                surface.update() //TODO shouldnt be necessary after migrating?
             }
         }
     }
-    Box(modifier.background(graph).height(400.dp).fillMaxWidth()) { }
+    // FIXME draw graph
+    Box(modifier/*.background(graph)*/.height(400.dp).fillMaxWidth()) { }
 }

@@ -16,9 +16,10 @@ kotlin {
             mainClass = "me.dvyy.particles.forces.MainKt"
         }
     }
-    jvmToolchain(24)
+    jvmToolchain(25)
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xskip-prerelease-check", "-Xskip-metadata-version-check")
     }
 
     js {

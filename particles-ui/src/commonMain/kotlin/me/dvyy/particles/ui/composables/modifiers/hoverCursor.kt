@@ -2,15 +2,10 @@ package me.dvyy.particles.ui.composables.modifiers
 
 import androidx.compose.runtime.Stable
 import de.fabmax.kool.input.CursorShape
-import de.fabmax.kool.input.PointerInput
-import de.fabmax.kool.modules.compose.modifiers.hoverListener
-import de.fabmax.kool.modules.compose.modifiers.onDrag
-import de.fabmax.kool.modules.ui2.Hoverable
-import de.fabmax.kool.modules.ui2.PointerEvent
 import me.dvyy.compose.mini.modifier.Modifier
 
 @Stable
-fun Modifier.hoverCursor(shape: CursorShape = CursorShape.DEFAULT) = hoverListener(object : Hoverable {
+fun Modifier.hoverCursor(shape: CursorShape = CursorShape.DEFAULT) = this /* FIXME hoverListener(object : Hoverable {
     override fun onEnter(ev: PointerEvent) {
         PointerInput.cursorShape = shape
     }
@@ -21,3 +16,4 @@ fun Modifier.hoverCursor(shape: CursorShape = CursorShape.DEFAULT) = hoverListen
 }).onDrag {
     PointerInput.cursorShape = shape
 }
+*/

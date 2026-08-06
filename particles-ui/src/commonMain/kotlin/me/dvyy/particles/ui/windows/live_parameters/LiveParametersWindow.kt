@@ -3,17 +3,15 @@ package me.dvyy.particles.ui.windows.live_parameters
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.modules.compose.composables.layout.Box
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
 import de.fabmax.kool.modules.compose.composables.rendering.Text
-import de.fabmax.kool.modules.compose.modifiers.backgroundColor
-import de.fabmax.kool.modules.compose.modifiers.fillMaxWidth
-import de.fabmax.kool.modules.compose.modifiers.padding
-import de.fabmax.kool.modules.compose.modifiers.width
-import de.fabmax.kool.modules.ui2.Grow
-import de.fabmax.kool.modules.ui2.dp
+import de.fabmax.kool.modules.compose.modifiers.background
 import de.fabmax.kool.util.Color
+import me.dvyy.compose.mini.layout.modifiers.fillMaxWidth
+import me.dvyy.compose.mini.layout.modifiers.padding
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.composables.Category
@@ -58,7 +56,7 @@ fun LiveParametersWindow(
                         Text("Pair")
                         force.interactions.forEachIndexed { row, interaction ->
                             val bg = if (row % 2 == 0) Color.WHITE.withAlpha(0.1f) else Color.TRANSPARENT
-                            Box(Modifier.fillMaxWidth().backgroundColor(bg)) {
+                            Box(Modifier.fillMaxWidth().background(bg)) {
                                 Row {
                                     interaction.set.ids.forEachIndexed { i, it ->
                                         val particle = configRepo.config.value.particles[it.id]
@@ -78,11 +76,12 @@ fun LiveParametersWindow(
                             force.interactions.forEachIndexed { row, interaction ->
                                 val bg = if (row % 2 == 0) Color.WHITE.withAlpha(0.1f)
                                 else Color.TRANSPARENT
-                                Box(Modifier.width(Grow.MinFit).padding(horizontal = 8.dp).backgroundColor(bg)) {
+                                //TODO intrinsic size Min
+                                Box(Modifier.fillMaxWidth().padding(horizontal = 8.dp).background(bg)) {
                                     val parameter = interaction.parameters[i]
                                     TextInputWithTooltip(
                                         parameter.value,
-                                        modifier = Modifier.width(Grow.MinFit),
+                                        modifier = Modifier.fillMaxWidth(), //TODO intrinsic size Min
                                         onValueChange = { new ->
                                             forceParametersViewModel.updateParameter(
                                                 force = force.name,

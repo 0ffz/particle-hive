@@ -7,3 +7,5 @@ include(
     "particles-demo",
     "particles-schema",
 )
+
+includeBuild("../kool")

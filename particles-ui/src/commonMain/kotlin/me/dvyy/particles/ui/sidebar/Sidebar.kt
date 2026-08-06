@@ -1,15 +1,15 @@
 package me.dvyy.particles.ui.sidebar
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.modules.compose.LocalColors
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
-import de.fabmax.kool.modules.compose.modifiers.*
-import de.fabmax.kool.modules.ui2.AlignmentX
-import de.fabmax.kool.modules.ui2.ReverseRowLayout
-import de.fabmax.kool.modules.ui2.RowLayout
-import de.fabmax.kool.modules.ui2.dp
+import de.fabmax.kool.modules.compose.modifiers.background
 import de.fabmax.kool.pipeline.Texture2d
+import me.dvyy.compose.mini.layout.jetpack.Arrangement
+import me.dvyy.compose.mini.layout.modifiers.fillMaxHeight
+import me.dvyy.compose.mini.layout.modifiers.width
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.ui.sidebar.AppSizes.sidebarSize
 import me.dvyy.particles.ui.windows.Window
@@ -38,15 +38,15 @@ fun Sidebar(
     }
 
     Row(
-        Modifier.fillMaxHeight()
-            .layout(if (rightAligned) ReverseRowLayout else RowLayout)
-            .alignX(if (rightAligned) AlignmentX.End else AlignmentX.Start)
+        Modifier.fillMaxHeight(),
+//            .layout(if (rightAligned) ReverseRowLayout else RowLayout),
+        horizontalArrangement = (if (rightAligned) Arrangement.End else Arrangement.Start)
     ) {
         Column(
             Modifier
                 .fillMaxHeight()
                 .width(sidebarSize)
-                .backgroundColor(LocalColors.current.background)
+                .background(LocalColors.current.background)
         ) {
             tabs.forEachIndexed { i, window ->
                 SidebarIcon(onClick = {

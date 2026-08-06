@@ -1,6 +1,7 @@
 package me.dvyy.particles.ui.windows.live_parameters
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.modules.compose.LocalColors
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
@@ -9,12 +10,10 @@ import de.fabmax.kool.modules.compose.composables.toolkit.Checkbox
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownButton
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenu
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenuItem
-import de.fabmax.kool.modules.compose.modifiers.alignY
-import de.fabmax.kool.modules.compose.modifiers.backgroundColor
-import de.fabmax.kool.modules.compose.modifiers.fillMaxWidth
-import de.fabmax.kool.modules.compose.modifiers.padding
-import de.fabmax.kool.modules.ui2.AlignmentY
-import de.fabmax.kool.modules.ui2.dp
+import de.fabmax.kool.modules.compose.modifiers.background
+import me.dvyy.compose.mini.layout.jetpack.Alignment
+import me.dvyy.compose.mini.layout.modifiers.fillMaxWidth
+import me.dvyy.compose.mini.layout.modifiers.padding
 import me.dvyy.compose.mini.modifier.Modifier
 
 @Composable
@@ -23,7 +22,7 @@ fun MenuItem(
     content: @Composable () -> Unit,
 ) {
     Row(Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
-        Text(name, Modifier.fillMaxWidth().alignY(AlignmentY.Center))
+        Text(name, Modifier.fillMaxWidth().align(Alignment.CenterVertically))
         content()
     }
 }
@@ -75,7 +74,7 @@ inline fun <reified T : Enum<T>> MenuEnum(
             DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
                 enumValues<T>().forEach { enumValue ->
                     val background = if (enumValue == value)
-                        Modifier.backgroundColor(LocalColors.current.primaryVariant)
+                        Modifier.background(LocalColors.current.primaryVariant)
                     else Modifier
                     DropdownMenuItem(
                         Modifier.fillMaxWidth().then(background),

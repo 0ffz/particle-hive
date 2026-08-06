@@ -1,17 +1,15 @@
 package me.dvyy.particles.ui.windows.live_parameters
 
 import androidx.compose.runtime.*
-import de.fabmax.kool.input.KeyboardInput
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenu
 import de.fabmax.kool.modules.compose.composables.toolkit.Slider
 import de.fabmax.kool.modules.compose.composables.toolkit.TextField
-import de.fabmax.kool.modules.compose.modifiers.fillMaxWidth
 import de.fabmax.kool.modules.compose.modifiers.onClick
-import de.fabmax.kool.modules.compose.modifiers.onWheelY
-import de.fabmax.kool.modules.compose.modifiers.width
-import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.toString
+import me.dvyy.compose.mini.layout.modifiers.fillMaxWidth
+import me.dvyy.compose.mini.layout.modifiers.width
 import me.dvyy.compose.mini.modifier.Modifier
 import kotlin.math.*
 
@@ -40,14 +38,14 @@ fun TextInputWithTooltip(
             else onValueChange(value) // reset on invalid input
         },
         modifier = Modifier.fillMaxWidth().onClick { shown = true }
-            .onWheelY {
-                // Don't round on wheel y for smooth scrolling
-                val multiplier = if (KeyboardInput.isShiftDown) 1.0 else 10.0
-                onValueChange(
-                    (value.toDouble() + multiplier * (0.1f).pow(precision) * it.pointer.scroll.y)
-                        .coerceAtLeast(0.0)
-                )
-            }
+//            FIXME .onWheelY {
+//                // Don't round on wheel y for smooth scrolling
+//                val multiplier = if (KeyboardInput.isShiftDown) 1.0 else 10.0
+//                onValueChange(
+//                    (value.toDouble() + multiplier * (0.1f).pow(precision) * it.pointer.scroll.y)
+//                        .coerceAtLeast(0.0)
+//                )
+//            }
             .then(modifier)
     )
 

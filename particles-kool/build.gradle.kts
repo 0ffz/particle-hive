@@ -13,13 +13,14 @@ plugins {
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xskip-prerelease-check", "-Xskip-metadata-version-check")
     }
     jvm {
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
-    jvmToolchain(24)
+    jvmToolchain(25)
 
     js {
         binaries.executable()

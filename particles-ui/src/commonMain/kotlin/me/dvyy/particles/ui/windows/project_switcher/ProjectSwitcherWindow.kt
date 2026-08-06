@@ -1,6 +1,7 @@
 package me.dvyy.particles.ui.windows.project_switcher
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.modules.compose.composables.layout.Box
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
@@ -8,12 +9,9 @@ import de.fabmax.kool.modules.compose.composables.rendering.Text
 import de.fabmax.kool.modules.compose.composables.toolkit.Button
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenu
 import de.fabmax.kool.modules.compose.composables.toolkit.DropdownMenuItem
-import de.fabmax.kool.modules.compose.modifiers.*
-import de.fabmax.kool.modules.ui2.AlignmentX
-import de.fabmax.kool.modules.ui2.AlignmentY
-import de.fabmax.kool.modules.ui2.RoundRectBackground
-import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.util.Color
+import me.dvyy.compose.mini.layout.jetpack.Alignment
+import me.dvyy.compose.mini.layout.modifiers.*
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.helpers.ConfigPath
@@ -41,7 +39,7 @@ fun ProjectSwitcherWindow(
             onOpen = { expanded = true }
         )
         DropdownMenu(expanded, modifier = Modifier.width(250.dp), onDismissRequest = { expanded = false }) {
-            Button(onClick = { viewModel.attemptOpenProject() }, modifier = Modifier.fillMaxWidth().margin(bottom = 4.dp)) {
+            Button(onClick = { viewModel.attemptOpenProject() }, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
                 Text("Open project")
             }
             recentPaths.forEach { path ->
@@ -68,14 +66,13 @@ fun randomColor(hash: Int): Color {
 
 @Composable
 private fun ProjectIcon(name: String) {
-    Box(Modifier.padding(4.dp).size(32.dp)) {
+    Box(Modifier.padding(4.dp).size(32.dp), contentAlignment = Alignment.Center) {
         Box(
             Modifier
-                .fillMaxSize()
-                .background(RoundRectBackground(randomColor(name.hashCode()), 4.dp))
-                .align(AlignmentX.Center, AlignmentY.Center)
+                .fillMaxSize() //TODO
+//                .background(RoundRectBackground(randomColor(name.hashCode()), 4.dp))
         ) {
-            Text(name.firstOrNull()?.uppercase() ?: "?", Modifier.align(AlignmentX.Center, AlignmentY.Center))
+            Text(name.firstOrNull()?.uppercase() ?: "?")
         }
     }
 }
@@ -88,9 +85,9 @@ private fun ProjectButton(
     onRemove: () -> Unit = {},
 ) {
     DropdownMenuItem(onClick = onOpen) {
-        Row(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ProjectIcon(path.substringAfterLast("/"))
-            Text(path.substringAfterLast("/").substringBeforeLast("."), Modifier.fillMaxWidth().alignY(AlignmentY.Center))
+            Text(path.substringAfterLast("/").substringBeforeLast("."), Modifier.fillMaxWidth())
             if (removable) IconButton(Icons.x, onClick = { onRemove() })
         }
     }

@@ -16,10 +16,11 @@ kotlin {
             "-Xcontext-parameters",
             "-Xcontext-sensitive-resolution"
         )
+        freeCompilerArgs.addAll("-Xskip-prerelease-check", "-Xskip-metadata-version-check")
     }
     jvm {
     }
-    jvmToolchain(24)
+    jvmToolchain(25)
 
     js {
         binaries.executable()

@@ -1,16 +1,21 @@
 package me.dvyy.particles.ui.windows
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import de.fabmax.kool.input.CursorShape
 import de.fabmax.kool.modules.compose.LocalColors
 import de.fabmax.kool.modules.compose.composables.layout.Box
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.rendering.Text
 import de.fabmax.kool.modules.compose.composables.toolkit.ScrollArea
-import de.fabmax.kool.modules.compose.modifiers.*
-import de.fabmax.kool.modules.ui2.AlignmentX
+import de.fabmax.kool.modules.compose.modifiers.background
 import de.fabmax.kool.modules.ui2.Dp
-import de.fabmax.kool.modules.ui2.dp
+import me.dvyy.compose.mini.layout.jetpack.Alignment
+import me.dvyy.compose.mini.layout.jetpack.ColumnScopeInstance.align
+import me.dvyy.compose.mini.layout.modifiers.fillMaxHeight
+import me.dvyy.compose.mini.layout.modifiers.fillMaxWidth
+import me.dvyy.compose.mini.layout.modifiers.padding
+import me.dvyy.compose.mini.layout.modifiers.width
 import me.dvyy.compose.mini.modifier.Modifier
 import me.dvyy.particles.ui.composables.modifiers.hoverCursor
 
@@ -18,7 +23,7 @@ import me.dvyy.particles.ui.composables.modifiers.hoverCursor
 fun WindowTitle(title: String) = Box(
     Modifier.fillMaxWidth()
         .padding(4.dp)
-        .backgroundColor(LocalColors.current.primaryVariant)
+        .background(LocalColors.current.primaryVariant)
 ) {
     Text(title)
 }
@@ -36,7 +41,7 @@ fun Window(
     ScrollArea(Modifier.fillMaxHeight(), scrollPaneModifier = Modifier.fillMaxHeight()) {
         Column(
             Modifier
-                .backgroundColor(LocalColors.current.background)
+                .background(LocalColors.current.background)
                 .fillMaxHeight()
                 .then(modifier)
         ) {
@@ -49,11 +54,11 @@ fun Window(
     Box(
         Modifier.fillMaxHeight()
             .width(4.dp)
-            .alignX(if (rightAligned) AlignmentX.Start else AlignmentX.End)
+            .align(if (rightAligned) Alignment.Start else Alignment.End)
             .hoverCursor(shape = CursorShape.RESIZE_E)
-            .onDrag {
-                onDeltaResize(if (rightAligned) (-it.pointer.delta.x).dp else it.pointer.delta.x.dp)
-            }
+//            .onDrag {
+//                onDeltaResize(if (rightAligned) (-it.pointer.delta.x).dp else it.pointer.delta.x.dp)
+//            }
     ) {}
 }
 
