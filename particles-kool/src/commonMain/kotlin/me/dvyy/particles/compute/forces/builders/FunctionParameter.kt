@@ -2,6 +2,8 @@ package me.dvyy.particles.compute.forces.builders
 
 import de.fabmax.kool.modules.ksl.lang.KslProgram
 import de.fabmax.kool.modules.ksl.lang.KslUniformScalar
+import de.fabmax.kool.modules.ksl.lang.uniformFloat1
+import de.fabmax.kool.modules.ksl.lang.uniformInt1
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.dsl.pairwise.ParticleSet

@@ -3,6 +3,8 @@ package me.dvyy.particles.compute.partitioning
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.pipeline.compat.storage
+import de.fabmax.kool.pipeline.compat.uniform1i
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 

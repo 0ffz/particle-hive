@@ -3,6 +3,7 @@ package me.dvyy.particles.compute
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.pipeline.compat.storage
 import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.Time
@@ -45,7 +46,7 @@ class ConvertParticlesShader(
     var convertChances by shader.storage("convertChances")
     var convertTo by shader.storage("convertTo")
     var particleTypes by shader.storage("particleTypes")
-    var randomSeed by shader.uniform1f("randomSeed")
+    var randomSeed by shader.bindUniformFloat1("randomSeed")
 
     fun addTo(computePass: ComputePass) {
         val config = configRepo.config.value

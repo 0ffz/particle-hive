@@ -1,5 +1,6 @@
 package me.dvyy.particles.helpers
 
+import de.fabmax.kool.modules.ksl.lang.sqrt
 import de.fabmax.kool.modules.ksl.lang.times
 import me.dvyy.particles.compute.forces.buildForce
 

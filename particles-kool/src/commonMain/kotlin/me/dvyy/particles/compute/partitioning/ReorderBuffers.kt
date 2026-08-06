@@ -6,6 +6,8 @@ import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.pipeline.GpuBuffer
 import de.fabmax.kool.pipeline.GpuType
+import de.fabmax.kool.pipeline.compat.storage
+import de.fabmax.kool.pipeline.compat.uniform1i
 
 /**
  * Given the resulting positions of an indices array that was 0..n before sorting,

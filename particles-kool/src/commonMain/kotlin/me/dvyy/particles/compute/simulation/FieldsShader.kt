@@ -4,6 +4,7 @@ import de.fabmax.kool.math.PI_F
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import de.fabmax.kool.pipeline.compat.*
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.forces.ForceBindings
 import me.dvyy.particles.compute.forces.PairwiseForceFunction

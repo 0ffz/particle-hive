@@ -20,7 +20,7 @@ class KslIndividualForceFunction(
     name: String,
 ): KslForceFocuntion(stage, name) {
     @PublishedApi
-    override val function = stage.functionFloat3(name) {  }
+    override val function = with(stage) { functionFloat3(name) { } }
 
     val position = function.paramFloat3("position")
 
@@ -33,7 +33,7 @@ class KslPairwiseFunction(
     name: String,
 ): KslForceFocuntion(stage, name) {
     @PublishedApi
-    override val function = stage.functionFloat1(name) { }
+    override val function = with(stage) { functionFloat1(name) { } }
 
     val distance = function.paramFloat1("dist")
     val localCount = function.paramFloat1("localCount")

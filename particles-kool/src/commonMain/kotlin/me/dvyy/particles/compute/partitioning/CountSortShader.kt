@@ -2,6 +2,7 @@ package me.dvyy.particles.compute.partitioning
 
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import de.fabmax.kool.pipeline.compat.storage
 
 class CountSortShader {
     val NUM_PER_WORK_ITEM = 64

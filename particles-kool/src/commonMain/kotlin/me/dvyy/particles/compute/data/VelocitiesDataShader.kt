@@ -4,6 +4,9 @@ import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.pipeline.compat.storage
+import de.fabmax.kool.pipeline.compat.uniform1f
+import de.fabmax.kool.pipeline.compat.uniform1i
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.helpers.ResetIntsShader
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE

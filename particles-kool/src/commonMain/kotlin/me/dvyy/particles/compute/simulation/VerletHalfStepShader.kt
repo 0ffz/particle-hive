@@ -2,6 +2,9 @@ package me.dvyy.particles.compute.simulation
 
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import de.fabmax.kool.pipeline.compat.storage
+import de.fabmax.kool.pipeline.compat.uniform1f
+import de.fabmax.kool.pipeline.compat.uniform3f
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
 class VerletHalfStepShader(val pass: Int) {

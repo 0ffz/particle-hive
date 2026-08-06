@@ -1,10 +1,9 @@
 package me.dvyy.particles.compute.helpers
 
 import de.fabmax.kool.modules.ksl.KslComputeShader
-import de.fabmax.kool.modules.ksl.lang.KslInt1
-import de.fabmax.kool.modules.ksl.lang.toInt1
-import de.fabmax.kool.modules.ksl.lang.x
+import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.GpuBuffer
+import de.fabmax.kool.pipeline.compat.storage
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
 fun ResetIntsShader(

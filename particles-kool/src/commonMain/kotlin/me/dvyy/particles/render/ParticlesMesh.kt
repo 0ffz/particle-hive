@@ -6,6 +6,9 @@ import de.fabmax.kool.modules.ksl.KslShader
 import de.fabmax.kool.modules.ksl.blocks.cameraData
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.Attribute
+import de.fabmax.kool.pipeline.compat.storage
+import de.fabmax.kool.pipeline.compat.uniform1i
+import de.fabmax.kool.pipeline.compat.uniformStruct
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList

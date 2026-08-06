@@ -3,6 +3,7 @@ package me.dvyy.particles.compute.helpers.types
 import de.fabmax.kool.modules.ksl.lang.KslExprInt1
 import de.fabmax.kool.modules.ksl.lang.KslExprInt3
 import de.fabmax.kool.modules.ksl.lang.KslScopeBuilder
+import de.fabmax.kool.modules.ksl.lang.fori
 import me.dvyy.particles.compute.simulation.FieldsShaderProgram
 
 class KslNeighbourCell(

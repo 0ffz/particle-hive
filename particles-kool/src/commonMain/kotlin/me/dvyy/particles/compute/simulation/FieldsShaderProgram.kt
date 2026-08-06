@@ -14,24 +14,24 @@ class FieldsShaderProgram(
     val is3d = configRepo.config.value.simulation.threeDimensions
 
     // Uniforms
-    val gridSize = program.uniformFloat1("gridSize")
-    val gridCells = program.uniformInt3("gridCells")
-    val dT = program.uniformFloat1("dT")
-    val count = program.uniformInt1("count")
-    val params = program.uniformStruct("params", SimulationParametersStruct)
-    val boxMax = program.uniformFloat3("boxMax")
+    val gridSize = with(program) { uniformFloat1("gridSize") }
+    val gridCells = with(program) { uniformInt3("gridCells") }
+    val dT = with(program) { uniformFloat1("dT") }
+    val count = with(program) { uniformInt1("count") }
+    val params = with(program) { uniformStruct("params", SimulationParametersStruct) }
+    val boxMax = with(program) { uniformFloat3("boxMax") }
 
     // Storage buffers
-    val particle2CellKey = program.storage<KslInt1>("particle2CellKey")
-    val cellOffsets = program.storage<KslInt1>("cellOffsets")
-    val cellOffsetsEnd = program.storage<KslInt1>("cellOffsetsEnd")
-    val positions = program.storage<KslFloat4>("positions")
-    val velocities = program.storage<KslFloat4>("velocities")
-    val forces = program.storage<KslFloat4>("forces")
-    val exportedData = program.storage<KslFloat1>("exportedData")
-    val velocityData = program.storage<KslFloat1>("velocityData")
+    val particle2CellKey = with(program) { storage<KslInt1>("particle2CellKey") }
+    val cellOffsets = with(program) { storage<KslInt1>("cellOffsets") }
+    val cellOffsetsEnd = with(program) { storage<KslInt1>("cellOffsetsEnd") }
+    val positions = with(program) { storage<KslFloat4>("positions") }
+    val velocities = with(program) { storage<KslFloat4>("velocities") }
+    val forces = with(program) { storage<KslFloat4>("forces") }
+    val exportedData = with(program) { storage<KslFloat1>("exportedData") }
+    val velocityData = with(program) { storage<KslFloat1>("velocityData") }
 
-    val particleTypes = program.storage<KslInt1>("particleTypes")
+    val particleTypes = with(program) { storage<KslInt1>("particleTypes") }
 
     // Define all force functions, create uniforms for their parameters
 //    val forcesManager = ForcesManager(stage, forceBindings)

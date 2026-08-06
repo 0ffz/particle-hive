@@ -5,6 +5,7 @@ import de.fabmax.kool.Platform
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputeShader
+import de.fabmax.kool.pipeline.compat.uniformStruct
 import de.fabmax.kool.util.MemoryLayout
 import de.fabmax.kool.util.Struct
 import de.fabmax.kool.util.set
@@ -24,7 +25,7 @@ class KslForce<R, T : Force<R>>(
     val function: R = binding.force.createFunction(stage)
 
     /** Creates a UBO representing the parameters */
-    val forceParameters = stage.program.uniformStruct(binding.uniformName, binding.forceParametersStruct)
+    val forceParameters = with(stage.program) { uniformStruct(binding.uniformName, binding.forceParametersStruct) }
 
     fun interactionFor(hash: KslInt) = forceParameters[binding.forceParametersStruct.interactions][hash]
 
