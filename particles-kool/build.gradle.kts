@@ -30,8 +30,7 @@ kotlin {
                 outputDirectory.set(File("${rootDir}/dist/js"))
             }
             commonWebpackConfig {
-                //mode = KotlinWebpackConfig.Mode.PRODUCTION
-                mode = KotlinWebpackConfig.Mode.DEVELOPMENT
+                mode = KotlinWebpackConfig.Mode.PRODUCTION
             }
         }
         @OptIn(ExperimentalKotlinGradlePluginApi::class)

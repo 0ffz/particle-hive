@@ -25,8 +25,7 @@ kotlin {
                 outputDirectory.set(projectDir.resolve("output"))
             }
             commonWebpackConfig {
-                //mode = KotlinWebpackConfig.Mode.PRODUCTION
-                mode = KotlinWebpackConfig.Mode.DEVELOPMENT
+                mode = KotlinWebpackConfig.Mode.PRODUCTION
             }
         }
         compilerOptions {

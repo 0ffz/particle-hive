@@ -2,19 +2,79 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Particle HIVE — WebGPU particle simulation</title>
     <style>
-        body {
-            background-color: black;
+        html, body {
+            background-color: #0b0d12;
+            color: #e6ebf2;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             border: 0;
             padding: 0;
             margin: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
         }
         canvas {
             width: 100vw;
             height: 100vh;
             display: block;
+        }
+        #status-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(11, 13, 18, 0.94);
+            z-index: 10;
+            transition: opacity 0.25s ease;
+        }
+        #status-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .status-card {
+            max-width: 460px;
+            width: 100%;
+            padding: 24px 28px;
+            border-radius: 12px;
+            background: #141821;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+            line-height: 1.55;
+        }
+        .status-card h1 {
+            margin: 0 0 8px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .status-card p {
+            margin: 0 0 14px;
+            font-size: 14px;
+            color: #b5c0d0;
+        }
+        .status-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .status-actions a {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            color: #0b0d12;
+            background: #b2ff00;
+        }
+        .status-actions a.secondary {
+            color: #e6ebf2;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
         }
     </style>
 </head>
@@ -25,6 +85,82 @@
         <code>&lt;canvas&gt;</code> element.
     </canvas>
 
-    <script src="particles-demo.js"></script>
+    <div id="status-overlay" role="status" aria-live="polite">
+        <div class="status-card" id="status-card">
+            <h1 id="status-title">Starting Particle HIVE</h1>
+            <p id="status-msg">Initializing WebGPU compute simulation…</p>
+            <div class="status-actions" id="status-actions" hidden>
+                <a href="https://particles.dvyy.me/docs/installation" target="_blank" rel="noopener">Installation docs</a>
+                <a class="secondary" href="https://github.com/0ffz/particle-hive/releases" target="_blank" rel="noopener">Desktop releases</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (async function () {
+            const overlay = document.getElementById("status-overlay");
+            const title = document.getElementById("status-title");
+            const msg = document.getElementById("status-msg");
+            const actions = document.getElementById("status-actions");
+
+            function showError(heading, detail) {
+                overlay.classList.remove("hidden");
+                title.textContent = heading;
+                msg.textContent = detail;
+                actions.hidden = false;
+            }
+
+            if (!navigator.gpu || typeof navigator.gpu.requestAdapter !== "function") {
+                showError(
+                    "WebGPU is not available in this browser",
+                    "Particle HIVE runs GPU compute shaders via WebGPU. Please open this page in a recent Chromium-based browser (Chrome, Edge, Brave) or Firefox with WebGPU enabled, or run the desktop release."
+                );
+                return;
+            }
+
+            let adapter = null;
+            try {
+                adapter = await navigator.gpu.requestAdapter();
+            } catch (e) {
+                showError("Could not initialize WebGPU", String(e && e.message || e));
+                return;
+            }
+
+            if (!adapter) {
+                showError(
+                    "No compatible WebGPU adapter found",
+                    "Your browser supports WebGPU, but no active GPU adapter was returned. Check hardware acceleration or GPU driver settings, or try the desktop release."
+                );
+                return;
+            }
+
+            let booted = false;
+            window.addEventListener("error", function (ev) {
+                if (!booted) showError("Failed to start Particle HIVE", ev.message || "Unexpected runtime error.");
+            });
+            window.addEventListener("unhandledrejection", function (ev) {
+                if (!booted) {
+                    const reason = ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason || "WebGPU initialization failed.");
+                    showError("Failed to start Particle HIVE", reason);
+                }
+            });
+
+            const script = document.createElement("script");
+            script.src = "particles-demo.js";
+            script.onload = function () {
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        booted = true;
+                        overlay.classList.add("hidden");
+                        setTimeout(function () { overlay.remove(); }, 300);
+                    });
+                });
+            };
+            script.onerror = function () {
+                showError("Could not load simulation bundle", "Failed to download particles-demo.js. Please reload the page.");
+            };
+            document.body.appendChild(script);
+        })();
+    </script>
 </body>
 </html>

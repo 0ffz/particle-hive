@@ -23,15 +23,21 @@ class ParticleClustering(
         val types = Int32Buffer(configRepo.count)
         buffers.positionBuffer.downloadData(positions)
         buffers.particleTypesBuffer.downloadData(types)
-        val allowedTypes = intArrayOf(configRepo.config.value.particleIds["monomer"]!!.id.toInt())
+        val allowedTypes = configRepo.config.value.particleIds["monomer"]
+            ?.let { intArrayOf(it.id.toInt()) }
+            ?: configRepo.config.value.particleIds.values.map { it.id.toInt() }.toIntArray()
 
         val data = mutableListOf<DoubleArray>()
+        val sourceIndices = mutableListOf<Int>()
         repeat(configRepo.count) {
-            if (types[it] in allowedTypes) data += doubleArrayOf(
-                positions[it * 4].toDouble(),
-                positions[it * 4 + 1].toDouble(),
-                positions[it * 4 + 2].toDouble()
-            )
+            if (types[it] in allowedTypes) {
+                sourceIndices += it
+                data += doubleArrayOf(
+                    positions[it * 4].toDouble(),
+                    positions[it * 4 + 1].toDouble(),
+                    positions[it * 4 + 2].toDouble()
+                )
+            }
         }
         // TODO because this operation takes a while, by the time it's finished
         //  the uploaded data is out of order due to us sorting particles.
@@ -41,8 +47,9 @@ class ParticleClustering(
         }
         buffers.clustersBuffer.uploadData(
             Int32Buffer(configRepo.count).apply {
+                repeat(configRepo.count) { set(it, -1) }
                 clusters.clusters.forEachIndexed { i, cluster ->
-                    set(i, cluster)
+                    set(sourceIndices[i], cluster)
                 }
             },
         )

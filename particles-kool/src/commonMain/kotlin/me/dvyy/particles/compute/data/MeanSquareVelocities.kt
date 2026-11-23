@@ -29,13 +29,20 @@ class MeanSquareVelocities(
         computeStage(WORK_GROUP_SIZE) {
             val inputs = storage<KslFloat1>("inputs")
             val outputs = storage<KslFloat1>("outputs")
-            val total = uniformInt1("total")
+            val inputCount = uniformInt1("inputCount")
+            val outputCount = uniformInt1("outputCount")
 
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
-                // average two neighbouring values, pass to output
-                `if`(id lt total) {
-                    outputs[id] = inputs[id * 2.const] + inputs[(id * 2.const) + 1.const]
+                // Sum two neighbouring values when present, keeping odd trailing elements intact
+                `if`(id lt outputCount) {
+                    val leftIndex = int1Var(id * 2.const)
+                    val rightIndex = int1Var(leftIndex + 1.const)
+                    val sum = float1Var(inputs[leftIndex])
+                    `if`(rightIndex lt inputCount) {
+                        sum += inputs[rightIndex]
+                    }
+                    outputs[id] = sum
                 }
             }
         }
@@ -57,7 +64,8 @@ class MeanSquareVelocities(
 
     private var inputs by reduce.storage("inputs")
     private var outputs by reduce.storage("outputs")
-    private var total by reduce.uniform1i("total")
+    private var inputCount by reduce.uniform1i("inputCount")
+    private var outputCount by reduce.uniform1i("outputCount")
 
     private val inputBuffer = Buffers.floats(buffers.count)
     private val outputBuffer = Buffers.floats(buffers.count)
@@ -75,19 +83,23 @@ class MeanSquareVelocities(
                 storage("velocities", buffers.velocitiesBuffer)
                 storage("squareVelocities", inputBuffer)
             }, numGroups = buffers.configRepo.numGroups)
+            var currentCount = buffers.count
             repeat(iterations) { iteration ->
+                val nextCount = (currentCount + 1) / 2
                 addTask(
                     reduce,
-                    numGroups = Vec3i(((roundedUp shr iteration) + WORK_GROUP_SIZE - 1) / WORK_GROUP_SIZE, 1, 1)
+                    numGroups = Vec3i((nextCount + WORK_GROUP_SIZE - 1) / WORK_GROUP_SIZE, 1, 1)
                 ).apply {
                     pipeline.swapPipelineData("iteration $iteration")
                     inputs = if (iteration % 2 == 0) inputBuffer else outputBuffer
                     outputs = if (iteration % 2 == 0) outputBuffer else inputBuffer
-                    total = buffers.count shr iteration
+                    inputCount = currentCount
+                    outputCount = nextCount
                     onBeforeDispatch {
                         pipeline.swapPipelineData("iteration $iteration")
                     }
                 }
+                currentCount = nextCount
             }
             addTask(outputShader.apply {
                 storage("inputs").set(readBack)

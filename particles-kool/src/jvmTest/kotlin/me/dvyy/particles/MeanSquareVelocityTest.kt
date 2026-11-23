@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.CsvSource
 
 class MeanSquareVelocityTest : KoolTest() {
     @ParameterizedTest
-    @CsvSource("1280") //FIXME 1279 fails because we average with 0s towards the end of the power
+    @CsvSource("64", "960", "1279", "1280", "9984")
     fun `should correctly calculate mean square velocity sum`(count: Int) = runTest {
         val config = ConfigRepository(AppSettings()).apply {
             updateConfig(
@@ -41,14 +41,15 @@ class MeanSquareVelocityTest : KoolTest() {
         val result = execManyShaders(scene, setup = {
             shader.addTo(it)
         }, read = {
-            val result = Float32Buffer(buffers.count)
-            shader.outputBuffer.downloadData(result)
+            val result = Float32Buffer(1)
+            shader.output.downloadData(result)
             result
         }).await()
 
-        // 12 = 2^2 + 2^2 + 2^2 is the square velocity for each entry, there are count total entries
+        // 12 = 2^2 + 2^2 + 2^2 is the square velocity for each entry, there are buffers.count total entries
         // first value should be the sum of all square velocities
-        assert(result.toArray().toList().first() == 12f * count)
-        println(result.toArray().toList())
+        assert(result[0] == 12f * buffers.count) {
+            "Expected ${12f * buffers.count}, got ${result[0]} for buffers.count=${buffers.count}"
+        }
     }
 }

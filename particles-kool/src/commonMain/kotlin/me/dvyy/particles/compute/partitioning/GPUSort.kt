@@ -35,10 +35,19 @@ class ResetBuffers(
                 // get global invocation id
                 val idx = int1Var(inGlobalInvocationId.x.toInt1())
                 val position = positions[idx].xyz
+                val maxX = int1Var(gridCells.x - 1.const)
+                val maxY = int1Var(gridCells.y - 1.const)
+                val maxZ = int1Var(gridCells.z - 1.const)
+                `if`(maxX lt 0.const) { maxX set 0.const }
+                `if`(maxY lt 0.const) { maxY set 0.const }
+                `if`(maxZ lt 0.const) { maxZ set 0.const }
                 val grid = int3Var((position / gridSize).toInt3())
-//                val xGrid = int1Var((position.x / gridSize).toInt1())
-//                val yGrid = int1Var((position.y / gridSize).toInt1())
-//                val zGrid = int1Var((position.z / gridSize).toInt1())
+                `if`(grid.x lt 0.const) { grid.x set 0.const }
+                `if`(grid.x gt maxX) { grid.x set maxX }
+                `if`(grid.y lt 0.const) { grid.y set 0.const }
+                `if`(grid.y gt maxY) { grid.y set maxY }
+                `if`(grid.z lt 0.const) { grid.z set 0.const }
+                `if`(grid.z gt maxZ) { grid.z set maxZ }
                 val cellId = int1Var(cellId(grid, gridCells))
                 cellIdKeys[idx] = cellId
                 indices[idx] = idx
