@@ -76,9 +76,9 @@ class ConfigRepository(
     }
 
     fun saveConfigLines(newLines: String) {
+        _configLines.update { newLines }
         val path = _currentFile.value ?: return
         FileSystemUtils.write(path, newLines)
-        _configLines.update { newLines }
     }
 
     inline fun whenDirty(run: ParticlesConfig.() -> Unit) {

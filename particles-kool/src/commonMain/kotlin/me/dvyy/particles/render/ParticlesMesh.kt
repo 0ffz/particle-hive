@@ -85,14 +85,15 @@ class ParticlesMesh(
                         val clusterId = int1Var(clusterBuffer[offset])
                         newColor set randomColor(clusterId)
                     }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
-                        val maxVelocity = simulationParams.struct.maxVelocity.ksl
-                        val velocity = float1Var(length(velocitiesBuffer[offset]))
+                        val maxVelocity = max(simulationParams.struct.maxVelocity.ksl, 1e-6f.const)
+                        val velocity = float1Var(length(velocitiesBuffer[offset].xyz))
                         val input = clamp(velocity / maxVelocity, 0f.const, 1f.const)
                         newColor set gradient(input)
                     }.elseIf(colorType eq ParticleColor.FORCE.ordinal.const) {
-                        val maxForce = simulationParams.struct.maxForce.ksl
-                        val force = float1Var(length(forcesBuffer[offset]))
-                        val input = clamp(pow(force / log(maxForce), 0.5f.const), 0f.const, 1f.const)
+                        val maxForce = max(simulationParams.struct.maxForce.ksl, 1.001f.const)
+                        val force = float1Var(length(forcesBuffer[offset].xyz))
+                        val logMax = max(log(maxForce), 1e-4f.const)
+                        val input = clamp(pow(force / logMax, 0.5f.const), 0f.const, 1f.const)
                         newColor set gradient(input)
                     }.elseIf(colorType eq ParticleColor.NEIGHBOURS.ordinal.const) {
                         newColor set gradient(clamp(localNeighboursBuffer[offset] / 2f.const, 0f.const, 1f.const))

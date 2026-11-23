@@ -16,12 +16,14 @@ class OffsetsShader(
     val reset = KslComputeShader("Offset Reset") {
         computeStage(WORK_GROUP_SIZE) {
             val offsetsBuffer = storage<KslInt1>("offsets")
+            val offsetsEndBuffer = storage<KslInt1>("offsetsEnd")
             val numValues = uniformInt1("numValues")
 
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 `if`(id lt numValues) {
                     offsetsBuffer[id] = numValues
+                    offsetsEndBuffer[id] = numValues
                 }
             }
         }
@@ -67,6 +69,7 @@ class OffsetsShader(
         offsets = buffers.offsetsBuffer
         offsetsEnd = buffers.offsetsEndBuffer
         reset.storage("offsets").set(buffers.offsetsBuffer)
+        reset.storage("offsetsEnd").set(buffers.offsetsEndBuffer)
         reset.uniform1i("numValues").set(configRepo.count)
         pass.addTask(reset, numGroups = configRepo.numGroups)
         pass.addTask(shader, numGroups = configRepo.numGroups)

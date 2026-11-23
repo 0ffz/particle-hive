@@ -24,7 +24,10 @@ class VelocitiesDataShader(
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 val velocity = float3Var(inputs[id].xyz)
                 val length = float1Var(length(velocity))
-                val bucket = (length / maxVelocity * numBuckets.toFloat1()).toInt1()
+                val safeMax = float1Var(max(maxVelocity, 1e-6f.const))
+                val bucket = int1Var((length / safeMax * numBuckets.toFloat1()).toInt1())
+                `if`(bucket lt 0.const) { bucket set 0.const }
+                `if`(bucket ge numBuckets) { bucket set numBuckets - 1.const }
                 //FIXME int1Var is needed since atomicAdd doesn't get called otherwise.
                 // Report to kool-engine.
                 int1Var(buckets.atomicAdd(bucket, 1.const))

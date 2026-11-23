@@ -3,6 +3,7 @@ package me.dvyy.particles.ui.viewmodels
 import com.charleskorn.kaml.YamlNode
 import de.fabmax.kool.KoolSystem
 import de.fabmax.kool.Platform
+import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
@@ -83,23 +84,37 @@ class ParticlesViewModel(
     }
 
     val meanSquareVelocity = MutableStateFlow(0f)
+    private var readingVelocityHistogram = false
+    private var readingMeanSquareVelocity = false
 
     suspend fun updateVelocityHistogram() {
-        val buckets = Int32Buffer(velocitiesData.numBuckets)
-        velocitiesData.buckets.downloadData(buckets)
-        val bucketsArray = buckets.toArray()
-        velocitiesHistogram.render(
-            FloatArray(bucketsArray.size) { it.toFloat() },
-            bucketsArray.map { it.toFloat() }.toFloatArray()
-        )
+        if (readingVelocityHistogram) return
+        readingVelocityHistogram = true
+        try {
+            val buckets = Int32Buffer(velocitiesData.numBuckets)
+            velocitiesData.buckets.downloadData(buckets)
+            val bucketsArray = buckets.toArray()
+            velocitiesHistogram.render(
+                FloatArray(bucketsArray.size) { it.toFloat() },
+                bucketsArray.map { it.toFloat() }.toFloatArray()
+            )
+        } finally {
+            readingVelocityHistogram = false
+        }
     }
 
     suspend fun readbackMeanSquareVelocity() {
-        val result = Float32Buffer(1)
-        meanSquareData.output.downloadData(result)
-        val msqV = result[0] / buffers.count
-        msqvOverTime.pushNewValueRight(msqV)
-        meanSquareVelocity.update { msqV }
+        if (readingMeanSquareVelocity) return
+        readingMeanSquareVelocity = true
+        try {
+            val result = Float32Buffer(1)
+            meanSquareData.output.downloadData(result)
+            val msqV = result[0] / buffers.count
+            msqvOverTime.pushNewValueRight(msqV)
+            meanSquareVelocity.update { msqV }
+        } finally {
+            readingMeanSquareVelocity = false
+        }
     }
 
     fun updateState(simulation: Simulation.() -> Simulation) = scope.launch {
@@ -121,6 +136,7 @@ class ParticlesViewModel(
         buffers.positionBuffer.initFloat4 {
             Buffers.randomPosition(configRepo.boxSize)
         }
+        buffers.forcesBuffer.initFloat4 { Vec4f.ZERO }
         buffers.initializeParticlesBuffer()
     }
 

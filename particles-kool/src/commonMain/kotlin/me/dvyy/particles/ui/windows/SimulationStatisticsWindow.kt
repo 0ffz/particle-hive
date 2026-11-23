@@ -51,7 +51,7 @@ class SimulationStatisticsWindow(
 
             Category("Graphs") {
                 Subcategory("Mean Square Velocity") {
-                    ParameterGraph(viewModel.msqvOverTime, redraw = { viewModel.readbackMeanSquareVelocity() }) {
+                    ParameterGraph(viewModel.msqvOverTime, redrawFreq = 10, redraw = { viewModel.readbackMeanSquareVelocity() }) {
                         Text("Mean Square Velocity: " + meanSquareVelocity.use().toString(2)) { }
                     }
                 }

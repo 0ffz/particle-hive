@@ -72,12 +72,15 @@ class ParticleBuffers(
         isReleased = true
         positionBuffer.release()
         velocitiesBuffer.release()
+        localNeighboursBuffer.release()
         forcesBuffer.release()
         particleGridCellKeys.release()
         sortIndices.release()
         offsetsBuffer.release()
+        offsetsEndBuffer.release()
         colorsBuffer.release()
         particleTypesBuffer.release()
+        clustersBuffer.release()
         particleColors.release()
         particleRadii.release()
     }

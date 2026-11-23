@@ -55,7 +55,7 @@ class VisualOptionsWindow(
                     }
                     TextField(targetFPS.use().toString()) {
                         modifier.onChange {
-                            val int = it.toIntOrNull()
+                            val int = it.toIntOrNull()?.coerceIn(1, 1000)
                             if (int != null) settings.ui.targetFPS.update { int }
                         }
                     }
